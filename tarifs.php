@@ -35,7 +35,7 @@ $currentPage = 'tarifs';
       <div class="grid services-grid">
         <article class="card card-service">
           <h2>Site vitrine</h2>
-          <p class="project-tech">À partir d’environ 500 €</p>
+          <p class="project-tech">À partir d’environ 300 €</p>
           <p>
             Un site simple pour présenter votre activité, vos services et vos coordonnées, avec un design
             moderne et adapté aux mobiles.
@@ -50,7 +50,7 @@ $currentPage = 'tarifs';
 
         <article class="card card-service">
           <h2>Mise à jour / refonte légère</h2>
-          <p class="project-tech">À partir d’environ 300 €</p>
+          <p class="project-tech">À partir d’environ 200 €</p>
           <p>
             Vous avez déjà un site mais il n’est plus à jour ou ne vous ressemble plus ? On part de
             l’existant pour le moderniser.

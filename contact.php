@@ -82,6 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         formulaire et je vous répondrai rapidement pour clarifier votre besoin et, si nécessaire, proposer
         un premier rendez-vous (téléphone ou visio).
       </p>
+      <p class="section-intro">
+        Les tarifs indiqués sur la page <a href="tarifs.php">Tarifs</a> sont 
+        <strong>indicatifs</strong> et peuvent être adaptés à votre situation.
+        N’hésitez pas à décrire votre projet : je vous répondrai avec une estimation
+        puis, si vous le souhaitez, un devis plus précis.
+      </p>
 
       <?php if ($success): ?>
         <div class="alert alert-success">
