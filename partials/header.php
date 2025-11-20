@@ -16,6 +16,7 @@ if (!isset($currentPage)) {
     <nav class="nav">
       <a href="index.php" class="nav-link <?php echo $currentPage === 'home' ? 'nav-link-active' : ''; ?>">Accueil</a>
       <a href="projects.php" class="nav-link <?php echo $currentPage === 'projects' ? 'nav-link-active' : ''; ?>">Projets</a>
+      <a href="tarifs.php" class="nav-link <?php echo $currentPage === 'tarifs' ? 'nav-link-active' : ''; ?>">Tarifs</a>
       <a href="veille.php" class="nav-link <?php echo $currentPage === 'veille' ? 'nav-link-active' : ''; ?>">Veille</a>
       <a href="contact.php" class="nav-link <?php echo $currentPage === 'contact' ? 'nav-link-active' : ''; ?>">Contact</a>
     </nav>
