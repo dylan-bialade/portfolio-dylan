@@ -15,4 +15,13 @@
       yearSpan.textContent = new Date().getFullYear();
     }
   })();
+  
+ async src="https://www.googletagmanager.com/gtag/js?id=G-82KCXG3K0Q">
+
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-82KCXG3K0Q');
+
 </script>
