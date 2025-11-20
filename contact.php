@@ -72,7 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
+        height="0" width="0" style="display:none;visibility:hidden">
+    </iframe>
+</noscript>
 <main>
   <section class="section">
     <div class="container">
