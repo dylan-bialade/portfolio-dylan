@@ -491,3 +491,97 @@ textarea {
     order: -1;
   }
 }
+/* === Démos interactives === */
+
+.demos-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 800px) {
+  .demos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card-demo {
+  padding: 1.2rem;
+}
+
+.demo-block {
+  margin-top: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.demo-message {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Zone de mouvement du carré */
+#move-area {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  height: 180px;
+  border-radius: 0.75rem;
+  border: 1px dashed #ccc;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+#player-square {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 0.4rem;
+  background: #333;
+}
+/* === Démos liées aux projets === */
+
+.demo-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+#projects-filter-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.5rem 0 0;
+}
+
+#projects-filter-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+#projects-filter-list li:last-child {
+  border-bottom: none;
+}
+
+.mini-planning {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.mini-planning-slot {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ddd;
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mini-planning-slot.is-active {
+  background: #111827;
+  color: #f9fafb;
+  border-color: #111827;
+}
