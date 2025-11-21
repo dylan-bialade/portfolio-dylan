@@ -2,9 +2,9 @@
 // config/db.php
 // À adapter avec les infos de ta base OVH
 
-$dsn = 'mysql:host=localhost;dbname=TON_NOM_DE_BASE;charset=utf8mb4';
-$dbUser = 'TON_USER';
-$dbPass = 'TON_MDP';
+$dsn = 'mysql:host=localhost;dbname=bialadcusergamme;charset=utf8mb4';
+$dbUser = 'bialadc';
+$dbPass = 'Bilou1978';
 
 try {
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
