@@ -1,10 +1,9 @@
 <?php
-// Valeurs par défaut si non définies dans la page
 if (!isset($pageTitle)) {
-    $pageTitle = 'Bialadev Studio – Développeur web freelance';
+    $pageTitle = 'Bialadev Studio – Portfolio';
 }
 if (!isset($pageDescription)) {
-    $pageDescription = '';
+    $pageDescription = "Portfolio de Dylan Bialade – développement web, projets, mini-démos et services freelance.";
 }
 if (!isset($pageRobots)) {
     $pageRobots = 'index,follow';
@@ -13,16 +12,17 @@ if (!isset($pageRobots)) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8">
   <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
+  <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="robots" content="<?php echo htmlspecialchars($pageRobots, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <?php if ($pageDescription !== ''): ?>
-    <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>" />
-  <?php endif; ?>
+  <!-- Favicon éventuel -->
+  <!-- <link rel="icon" href="/assets/img/favicon.ico"> -->
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="<?php echo htmlspecialchars($pageRobots, ENT_QUOTES, 'UTF-8'); ?>" />
-  <link rel="stylesheet" href="style.css" />
+  <!-- CSS principal -->
+  <link rel="stylesheet" href="/assets/css/style.css">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XRK50F6YD0"></script>
