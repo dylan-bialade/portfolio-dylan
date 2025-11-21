@@ -2,7 +2,7 @@
 // config/db.php
 // À adapter avec les infos de ta base OVH
 
-$dsn = 'mysql:host=localhost;dbname=bialadcusergamme;charset=utf8mb4';
+$dsn = 'mysql:host=bialadcusergamme.mysql.db;dbname=bialadcusergamme;charset=utf8mb4';
 $dbUser = 'bialadcusergamme';
 $dbPass = 'Bilou1978';
 
