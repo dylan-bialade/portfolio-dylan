@@ -1,23 +1,17 @@
 <?php
 $currentPage = 'projects';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Projets – Bialadev Studio | Développement web &amp; outils métiers</title>
-  <meta name="description"
-        content="Sélection de projets réalisés par Bialadev Studio : applications Symfony, APIs, outils métiers, front-end JS et projets scolaires encadrés." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+<?php
+$currentPage     = 'projects';
+$pageTitle       = 'Projets – Bialadev Studio | Développement web & outils métiers';
+$pageDescription = "Sélection de projets réalisés par Bialadev Studio : applications Symfony, APIs, outils métiers, front-end JS et projets scolaires encadrés.";
+$pageRobots      = 'index,follow';
+
+include __DIR__ . '/partials/head.php';
+?>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
+
 <main>
   <section class="section">
     <div class="container">

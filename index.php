@@ -1,25 +1,13 @@
 <?php
-$currentPage = 'home';
+$currentPage    = 'home';
+$pageTitle      = 'Bialadev Studio – Développeur web freelance à Gaillac (Tarn)';
+$pageDescription = "Portfolio de Bialadev Studio, le studio de développement web de Dylan Bialade : création de sites vitrines, outils métiers et APIs sur mesure à Gaillac (Tarn).";
+$pageRobots     = 'index,follow';
+
+include __DIR__ . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Bialadev Studio – Développeur web freelance à Gaillac (Tarn)</title>
-  <meta name="description"
-        content="Portfolio de Bialadev Studio, le studio de développement web de Dylan Bialade : création de sites vitrines, outils métiers et APIs sur mesure à Gaillac (Tarn)." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-</head>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<!-- Google Tag Manager (noscript) -->
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
-<!-- End Google Tag Manager (noscript) -->
 <main>
   <!-- Hero -->
   <section class="section hero">

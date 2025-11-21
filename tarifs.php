@@ -1,23 +1,15 @@
 <?php
-$currentPage = 'tarifs';
+$currentPage     = 'tarifs';
+$pageTitle       = 'Tarifs – Bialadev Studio | Offres et budgets indicatifs';
+$pageDescription = "Tarifs indicatifs de Bialadev Studio pour la création de sites vitrines, la mise à jour de sites existants et le développement d’outils métiers sur mesure.";
+$pageRobots      = 'index,follow';
+
+include __DIR__ . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Tarifs – Bialadev Studio | Offres et budgets indicatifs</title>
-  <meta name="description"
-        content="Tarifs indicatifs de Bialadev Studio pour la création de sites vitrines, la mise à jour de sites existants et le développement d’outils métiers sur mesure." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-</head>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
+
+
 <main>
   <section class="section">
     <div class="container">

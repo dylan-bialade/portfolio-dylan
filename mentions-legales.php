@@ -1,24 +1,16 @@
 <?php
 $currentPage = '';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Mentions légales &amp; Confidentialité – Bialadev Studio</title>
-  <meta name="description"
-        content="Mentions légales et politique de confidentialité du site bialadev.fr, édité par Bialadev Studio (Dylan Bialade)." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, follow" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+<?php
+$currentPage     = '';
+$pageTitle       = 'Mentions légales & Confidentialité – Bialadev Studio';
+$pageDescription = "Mentions légales et politique de confidentialité du site bialadev.fr, édité par Bialadev Studio (Dylan Bialade).";
+$pageRobots      = 'noindex,follow';
+
+include __DIR__ . '/partials/head.php';
+?>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
 <main>
   <section class="section">
     <div class="container">

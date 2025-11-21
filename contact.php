@@ -60,23 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Contact – Bialadev Studio | Discuter de votre projet</title>
-  <meta name="description"
-        content="Contactez Bialadev Studio pour discuter d’un site vitrine, d’un outil métier ou d’un besoin spécifique en développement web." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+<?php
+$currentPage     = 'contact';
+$pageTitle       = 'Contact – Bialadev Studio | Discuter de votre projet';
+$pageDescription = "Contactez Bialadev Studio pour discuter d’un site vitrine, d’un outil métier ou d’un besoin spécifique en développement web.";
+$pageRobots      = 'index,follow';
+
+include __DIR__ . '/partials/head.php';
+?>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
 <main>
   <section class="section">
     <div class="container">

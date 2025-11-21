@@ -106,23 +106,16 @@ usort($allItems, function ($a, $b) {
     return $db <=> $da;
 });
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Veille technologique – Bialadev Studio</title>
-  <meta name="description"
-        content="Veille technologique de Bialadev Studio : sélection d’articles récents autour de Symfony, PHP, JavaScript, Java et .NET." />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+<?php
+$currentPage     = 'veille';
+$pageTitle       = 'Veille technologique – Bialadev Studio';
+$pageDescription = "Veille technologique de Bialadev Studio : sélection d’articles récents autour de Symfony, PHP, JavaScript, Java et .NET.";
+$pageRobots      = 'index,follow';
+
+include __DIR__ . '/partials/head.php';
+?>
 <body>
 <?php include __DIR__ . '/partials/header.php'; ?>
-<noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7PTM2B"
-        height="0" width="0" style="display:none;visibility:hidden">
-    </iframe>
-</noscript>
 <main>
   <section class="section">
     <div class="container">
