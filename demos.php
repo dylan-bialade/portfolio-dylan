@@ -1,7 +1,7 @@
 <?php
 $currentPage     = 'demos';
 $pageTitle       = 'Démos interactives – Bialadev Studio';
-$pageDescription = "Petites démos de mini-jeux et d’interfaces interactives réalisées en JavaScript pour illustrer mes compétences front-end.";
+$pageDescription = "Petites démos de mini-jeux et d’interfaces interactives réalisées en JavaScript pour illustrer mes compétences front-end et back-end.";
 $pageRobots      = 'index,follow';
 
 include __DIR__ . '/partials/head.php';
@@ -14,10 +14,9 @@ include __DIR__ . '/partials/head.php';
     <div class="container">
       <h1>Démos interactives</h1>
       <p class="section-intro">
-        Voici quelques petites démos en <strong>JavaScript</strong> inspirées de l’époque où je
-        développais un site avec plusieurs mini-jeux. L’idée ici n’est pas de montrer un gros jeu
-        complet, mais des exemples concrets de <strong>logique front-end</strong>, d’<strong>événements</strong>
-        et d’<strong>interactions utilisateur</strong>.
+        Voici quelques petites démos en <strong>JavaScript</strong> inspirées de différents projets :
+        mini-jeux, interactions front-end et une démo plus avancée (<strong>Cookie Dev</strong>)
+        qui utilise aussi un <strong>vrai back-end</strong> (PHP, MySQL, comptes utilisateurs).
       </p>
 
       <div class="grid demos-grid">
@@ -72,30 +71,40 @@ include __DIR__ . '/partials/head.php';
             </p>
           </div>
         </article>
+
+        <!-- Démo 4 : Cookie Dev (lien vers la version avec back-end) -->
+        <article class="card card-demo">
+          <h2>Cookie Dev – Clicker du développeur</h2>
+          <p>
+            Mini-jeu de type <strong>Cookie Clicker</strong> dans l’univers du développement web :
+            vous gagnez des lignes de code en cliquant et débloquez des <strong>langages</strong>,
+            <strong>frameworks</strong> et <strong>outils</strong>.
+          </p>
+          <p class="demo-message">
+            Cette démo utilise un <strong>back-end en PHP</strong> avec une
+            <strong>base MySQL</strong> pour gérer les comptes utilisateurs et
+            <strong>sauvegarder la progression</strong>.
+          </p>
+          <div class="demo-block">
+            <p style="margin-bottom:0.75rem;">
+              Le jeu complet est disponible sur une page dédiée :
+            </p>
+            <a href="/devcookie.php" class="btn btn-primary">Jouer à Cookie Dev</a>
+            <p style="margin-top:0.6rem; font-size:0.9rem;">
+              Vous pouvez jouer en invité, mais si vous <a href="/auth/register.php">créez un compte</a>
+              ou <a href="/auth/login.php?redirect=/devcookie.php">vous connectez</a>, votre progression
+              sera sauvegardée.
+            </p>
+          </div>
+        </article>
       </div>
 
+      <!-- Démos liées à certains projets -->
       <section class="section" style="padding-top:2rem;">
-        <h2>Et pour les projets plus complexes ?</h2>
-        <p>
-          Ces exemples sont volontairement simples, mais ils s’appuient sur les mêmes bases que
-          des interfaces plus avancées : gestion des événements, mise à jour de l’interface
-          en fonction de l’état, validation d’entrées, etc.
-        </p>
-        <p>
-          Pour des projets plus complets (applications web, outils métiers, APIs, etc.),
-          vous pouvez consulter la page <a href="projects.php">Projets</a> ou
-          <a href="contact.php">me contacter</a> pour discuter d’un besoin spécifique.
-        </p>
-      </section>
-    </div>
-  </section>
-  <section class="section" style="padding-top:2rem;">
-  <h2>Et pour les projets plus complexes ?</h2>
-          <section class="section" style="padding-top:2rem;">
         <h2>Démos liées à certains projets</h2>
         <p class="section-intro">
           Ces exemples sont inspirés de projets présentés sur la page
-          <a href="projects.php">Projets</a> : dashboard d’administration, gestion de planning,
+          <a href="/projects.php">Projets</a> : dashboard d’administration, gestion de planning,
           etc. L’objectif est de montrer, en version simplifiée, des comportements que
           j’implémente dans ces applications.
         </p>
@@ -151,6 +160,21 @@ include __DIR__ . '/partials/head.php';
         </div>
       </section>
 
+      <section class="section" style="padding-top:2rem;">
+        <h2>Et pour les projets plus complexes ?</h2>
+        <p>
+          Ces exemples sont volontairement simples, mais ils s’appuient sur les mêmes bases que
+          des interfaces plus avancées : gestion des événements, mise à jour de l’interface
+          en fonction de l’état, validation d’entrées, etc.
+        </p>
+        <p>
+          Pour des projets plus complets (applications web, outils métiers, APIs, etc.),
+          vous pouvez consulter la page <a href="/projects.php">Projets</a> ou
+          <a href="/contact.php">me contacter</a> pour discuter d’un besoin spécifique.
+        </p>
+      </section>
+    </div>
+  </section>
 </main>
 
 <?php include __DIR__ . '/partials/footer.php'; ?>
@@ -298,6 +322,7 @@ include __DIR__ . '/partials/head.php';
   window.addEventListener('keydown', handleKey);
   updatePosition();
 })();
+
 // ==========================
 // Démo projets 1 : Filtre de liste
 // ==========================
@@ -346,10 +371,6 @@ include __DIR__ . '/partials/head.php';
 
   updateOutput();
 })();
-
-
-
-
 </script>
 
 </body>
