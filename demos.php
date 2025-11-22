@@ -173,6 +173,30 @@ include __DIR__ . '/partials/head.php';
           <a href="/contact.php">me contacter</a> pour discuter d’un besoin spécifique.
         </p>
       </section>
+      <div class="grid demos-grid">
+          <!-- … tes autres <article class="card card-demo"> déjà en place … -->
+
+          <!-- Nouvelle démo : exemple de site vitrine -->
+          <article class="card card-demo">
+            <h2>Exemple de site vitrine (Restaurant)</h2>
+            <p>
+              Exemple complet de <strong>site vitrine</strong> pour restaurant :
+              page d’accueil, présentation, carte, réservation et contact.
+              C’est un modèle que je peux adapter pour un client en changeant
+              simplement les contenus et quelques éléments graphiques.
+            </p>
+            <div class="demo-block">
+              <p style="margin-bottom:0.75rem;">
+                Cette démo montre le type de structure que je peux proposer rapidement
+                pour un projet de site vitrine.
+              </p>
+              <a href="/templates/vitrine-restaurant/index.html" target="_blank" class="btn btn-primary">
+                Voir l’exemple de site vitrine
+              </a>
+            </div>
+          </article>
+      </div>
+
     </div>
   </section>
 </main>

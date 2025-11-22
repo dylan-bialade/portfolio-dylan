@@ -21,6 +21,9 @@ if (!isset($currentPage)) {
       <a href="/veille.php" class="nav-link <?php echo $currentPage === 'veille' ? 'nav-link-active' : ''; ?>">Veille</a>
       <a href="/contact.php" class="nav-link <?php echo $currentPage === 'contact' ? 'nav-link-active' : ''; ?>">Contact</a>
 
+      <!-- Liens vers l’espace modèles vitrines -->
+      <a href="/templates/vitrine-restaurant/index.html" class="nav-link" target="_blank">Modèles vitrines</a>
+
       <!-- Liens auth -->
       <a href="/auth/login.php" class="nav-link">Connexion</a>
       <a href="/auth/register.php" class="nav-link">Inscription</a>

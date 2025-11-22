@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Restaurant – Modèle de site vitrine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Modèle de site vitrine pour restaurant. À personnaliser pour chaque client.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <!-- À personnaliser : nom du restaurant -->
+      <div class="logo">Le Bon Plat</div>
+      <nav class="nav">
+        <a href="#accueil">Accueil</a>
+        <a href="#carte">La carte</a>
+        <a href="#apropos">À propos</a>
+        <a href="#reservation">Réservation</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section id="accueil" class="hero">
+      <div class="container hero-inner">
+        <div class="hero-text">
+          <!-- À personnaliser : accroche principale -->
+          <h1>Cuisine bistronomique au cœur de la ville</h1>
+          <p>
+            Une cuisine de saison, des produits frais et une ambiance chaleureuse.
+            Idéal pour un déjeuner rapide, un dîner entre amis ou un repas d’affaires.
+          </p>
+          <div class="hero-actions">
+            <a href="#reservation" class="btn primary">Réserver une table</a>
+            <a href="#carte" class="btn outline">Découvrir la carte</a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <!-- Image de stock à remplacer pour le client -->
+          <div class="hero-image-placeholder">Photo du restaurant / plat</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section carte -->
+    <section id="carte" class="section">
+      <div class="container">
+        <h2>Notre carte</h2>
+        <p class="section-intro">
+          Une sélection de plats faits maison, inspirés des produits de saison.
+          Exemple de structure à adapter aux besoins du client (entrées, plats, desserts).
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>Entrées</h3>
+            <ul>
+              <li>Tatin de tomates confites – 8 €</li>
+              <li>Œuf parfait, crème de champignons – 9 €</li>
+              <li>Salade de chèvre chaud – 7 €</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Plats</h3>
+            <ul>
+              <li>Magret de canard, légumes rôtis – 18 €</li>
+              <li>Filet de dorade, purée de céleri – 19 €</li>
+              <li>Risotto de saison – 16 €</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Desserts</h3>
+            <ul>
+              <li>Tiramisu maison – 7 €</li>
+              <li>Fondant au chocolat – 7 €</li>
+              <li>Assiette de fromages – 8 €</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- À propos -->
+    <section id="apropos" class="section section-alt">
+      <div class="container about">
+        <div class="about-text">
+          <h2>À propos du restaurant</h2>
+          <p>
+            Ce bloc raconte l’histoire du restaurant : le chef, la philosophie de la cuisine,
+            l’importance du local, etc. À personnaliser pour chaque client.
+          </p>
+          <p>
+            Utiliser cette section pour rassurer et donner envie : expérience, savoir-faire,
+            équipe, ambiance…
+          </p>
+        </div>
+        <div class="about-image">
+          <div class="hero-image-placeholder">Photo du chef / de la salle</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Réservation -->
+    <section id="reservation" class="section">
+      <div class="container">
+        <h2>Réservation</h2>
+        <p class="section-intro">
+          Exemple de bloc de réservation simple. Pour un vrai projet client, ce formulaire
+          peut être relié à un back-end ou à un outil externe (LaFourchette, Google, etc.).
+        </p>
+        <form class="form-grid">
+          <div class="form-group">
+            <label for="res-name">Nom</label>
+            <input type="text" id="res-name" placeholder="Votre nom complet">
+          </div>
+          <div class="form-group">
+            <label for="res-email">E-mail</label>
+            <input type="email" id="res-email" placeholder="vous@example.com">
+          </div>
+          <div class="form-group">
+            <label for="res-date">Date</label>
+            <input type="date" id="res-date">
+          </div>
+          <div class="form-group">
+            <label for="res-time">Heure</label>
+            <input type="time" id="res-time">
+          </div>
+          <div class="form-group">
+            <label for="res-people">Nombre de couverts</label>
+            <input type="number" id="res-people" min="1" value="2">
+          </div>
+          <div class="form-group full">
+            <label for="res-message">Message (optionnel)</label>
+            <textarea id="res-message" placeholder="Précisions, intolérances, demandes particulières..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Envoyer la demande</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="section section-alt">
+      <div class="container contact">
+        <div>
+          <h2>Contact & accès</h2>
+          <p>
+            Adresse de démonstration à remplacer par celle du client.
+          </p>
+          <p>
+            123, Rue de la Gastronomie<br>
+            31000 Toulouse<br>
+            Tél : 05 00 00 00 00<br>
+            E-mail : contact@restaurant-demo.fr
+          </p>
+          <p class="muted">
+            Horaires, moyens d’accès, parking, transports en commun… à adapter au cas réel.
+          </p>
+        </div>
+        <div>
+          <div class="map-placeholder">Carte / plan d’accès (Google Maps intégré ou image)</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© Le Bon Plat – Modèle de site vitrine by Bialadev Studio. À personnaliser pour chaque client.</p>
+    </div>
+  </footer>
+</body>
+</html>

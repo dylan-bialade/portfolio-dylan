@@ -27,6 +27,32 @@ include __DIR__ . '/partials/head.php';
           peut être revu à la hausse ou à la baisse après analyse de la demande et discussion avec vous.
         </p>
       </div>
+        <article class="card card-project">
+          <h2>Site vitrine basé sur un modèle existant</h2>
+            <p>
+              Pour les projets avec un budget serré ou un besoin rapide, je propose des
+              <strong>sites vitrines basés sur des modèles que j’ai déjà conçus</strong>.
+              Cela permet de gagner du temps (et donc de réduire le coût) tout en gardant un
+              rendu moderne et professionnel.
+            </p>
+            <ul>
+              <li>Structure déjà prête (restaurant, artisan, association…)</li>
+              <li>Personnalisation des textes, couleurs, photos et sections</li>
+              <li>Possibilité d’ajouter des fonctionnalités spécifiques (formulaire, réservation, etc.)</li>
+            </ul>
+            <p class="muted" style="font-size:0.9rem;">
+              Les tarifs sont <strong>indicatifs</strong> et peuvent évoluer selon la complexité
+              du projet (pages supplémentaires, formulaires avancés, intégrations externes…).
+            </p>
+            <p style="margin-top:0.75rem;">
+              Exemples visibles directement :
+              <br>
+              – <a href="/templates/vitrine-restaurant/index.html" target="_blank">Modèle vitrine restaurant</a><br>
+              – <a href="/templates/vitrine-artisan/index.html" target="_blank">Modèle vitrine artisan / freelance</a><br>
+              – <a href="/templates/vitrine-association/index.html" target="_blank">Modèle vitrine association</a>
+            </p>
+      </article>
+
 
       <div class="grid services-grid">
         <article class="card card-service">

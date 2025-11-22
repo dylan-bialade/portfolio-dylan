@@ -92,7 +92,42 @@ include __DIR__ . '/partials/head.php';
             Petits scripts et outils internes pour simplifier le quotidien : export de données, petites
             automatisations, etc.
           </p>
-        </article>
+            </article>
+              <article class="card card-project">
+                <h2>Cookie Dev – Mini-jeu clicker avec comptes & sauvegarde</h2>
+                  <p>
+                    Mini-jeu de type <strong>Cookie Clicker</strong> dans l’univers du développement web.
+                    L’utilisateur gagne des <strong>lignes de code</strong> en cliquant et peut investir
+                    dans des <strong>langages</strong>, <strong>frameworks</strong> et <strong>outils DevOps</strong>
+                    pour augmenter sa productivité.
+                  </p>
+                  <p>
+                    Le projet sert surtout de démonstration technique : gestion de
+                    <strong>comptes utilisateurs</strong>, <strong>sessions PHP</strong>,
+                    <strong>mot de passe hashé</strong>, et <strong>sauvegarde de l’état du jeu</strong>
+                    dans une base MySQL au format JSON.
+                  </p>
+
+                  <ul>
+                    <li>Inscription / connexion (PHP, sessions, <code>password_hash</code> / <code>password_verify</code>).</li>
+                    <li>Table <code>users</code> + table <code>devcookie_profiles</code> (état du jeu en JSON).</li>
+                    <li>Backend en <strong>PHP/PDO</strong>, front en <strong>JavaScript</strong> (logique du jeu).</li>
+                    <li>Sauvegarde automatique côté serveur pour les utilisateurs connectés.</li>
+                  </ul>
+
+                  <div class="tag-list">
+                    <span class="tag">PHP</span>
+                    <span class="tag">MySQL</span>
+                    <span class="tag">PDO</span>
+                    <span class="tag">Sessions</span>
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">Jeu web</span>
+                  </div>
+
+          <p style="margin-top:0.75rem;">
+            <a href="/devcookie.php" class="btn btn-primary">Voir la démo Cookie Dev</a>
+          </p>
+      </article>
       </div>
     </div>
   </section>
