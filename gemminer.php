@@ -2,10 +2,10 @@
 // gemminer.php
 session_start();
 
-$currentPage     = 'demos'; // pour surligner "Démos" si tu veux
+$currentPage     = 'demos'; // ou autre si tu veux changer le surlignage du menu
 $pageTitle       = 'Gem Miner Tycoon – Jeu de minage & gestion';
-$pageDescription = "Jeu de minage idle : mineurs, gemmes, logistique, ventes, prestige et classement.";
-$pageRobots      = 'noindex,follow'; // tu pourras passer à index,follow plus tard
+$pageDescription = "Jeu de minage idle : gemmes, logistique, ventes, prestige et classement.";
+$pageRobots      = 'noindex,follow';
 
 include __DIR__ . '/partials/head.php';
 ?>
@@ -13,92 +13,92 @@ include __DIR__ . '/partials/head.php';
 <?php include __DIR__ . '/partials/header.php'; ?>
 
 <main>
-  <section class="section">
+  <section class="section" style="padding-top:1.5rem;padding-bottom:1.5rem;">
     <div class="container">
       <h1>Gem Miner Tycoon</h1>
-      <p class="section-intro">
-        Construisez votre empire de mineurs : cliquez sur le gisement pour extraire des <strong>gemmes</strong>,
-        améliorez vos outils, optimisez la <strong>logistique</strong> et développez votre réseau de <strong>boutiques</strong>.
-        Gagnez du prestige, débloquez des compétences et grimpez dans le classement.
+      <p class="section-intro" style="max-width:720px;">
+        Cliquez sur le gisement pour extraire des <strong>gemmes</strong>, débloquez des
+        <strong>outils</strong>, optimisez la <strong>logistique</strong> et la
+        <strong>vente</strong>, puis réinitialisez avec du prestige pour aller encore plus loin.
       </p>
 
       <?php if (!isset($_SESSION['user_id'])): ?>
         <p class="alert alert-info">
-          Vous pouvez jouer en invité, mais votre progression ne sera <strong>pas sauvegardée</strong> et vous n’apparaîtrez
-          pas dans le classement. <a href="/auth/register.php">Inscription</a> ou
-          <a href="/auth/login.php?redirect=/gemminer.php">Connexion</a> recommandée pour profiter du jeu à fond.
+          Vous jouez en invité : la progression ne sera <strong>pas sauvegardée</strong> et vous
+          n’apparaîtrez pas dans le classement.
+          <a href="/auth/register.php?redirect=/games.php">Créer un compte</a> ou
+          <a href="/auth/login.php?redirect=/games.php">Se connecter</a>.
         </p>
       <?php else: ?>
         <p class="alert alert-info">
-          Connecté en tant que <strong><?php echo htmlspecialchars($_SESSION['pseudo'] ?? 'Joueur', ENT_QUOTES, 'UTF-8'); ?></strong>.
-          Votre progression est sauvegardée automatiquement et utilisée pour le classement.
+          Connecté en tant que
+          <strong><?php echo htmlspecialchars($_SESSION['pseudo'] ?? 'Joueur', ENT_QUOTES, 'UTF-8'); ?></strong>.
+          Votre progression est sauvegardée automatiquement.
         </p>
       <?php endif; ?>
 
-      <!-- Layout général : gemme à gauche, stats au centre, leaderboard + upgrades à droite -->
+      <!-- Layout général -->
       <div class="gm-layout">
-        <!-- Haut gauche : gemme principale -->
+        <!-- Gauche : gemme -->
         <div class="gm-left">
           <div class="gm-gem-area">
             <div id="gm-gem-visual" class="gm-gem gm-gem-tier0">
               <img id="gm-gem-img"
-                   src="/assets/gemminer/gems/gem_tier0.png"
+                   src="assets/gemminer/gems/gem_tier0.png"
                    alt="Gemme actuelle">
             </div>
             <button id="gm-mine-btn" class="btn btn-primary gm-mine-btn">
               Miner ce gisement
             </button>
             <p class="muted" id="gm-ore-info">
-              Quartz terne – PV : <span id="gm-ore-hp">100</span> / <span id="gm-ore-maxhp">100</span>
+              Quartz terne – PV : <span id="gm-ore-hp">30</span> / <span id="gm-ore-maxhp">30</span>
             </p>
           </div>
         </div>
 
-        <!-- Haut centre : stats globales -->
+        <!-- Centre : stats -->
         <div class="gm-center">
-          <article class="card">
+          <article class="card gm-card-compact">
             <h2>Statistiques</h2>
-            <p>Gemmes actuelles : <strong><span id="gm-gems">0</span></strong></p>
-            <p>Total de gemmes extraites : <strong><span id="gm-total-gems">0</span></strong></p>
-            <p>Extraction par clic : <strong><span id="gm-dmg-click">1</span></strong> PV</p>
-            <p>Extraction automatique : <strong><span id="gm-dps">0</span></strong> PV / s</p>
-            <p>Production (minées / transportées / vendues) :<br>
+            <p>Gemmes : <strong><span id="gm-gems">0</span></strong></p>
+            <p>Total extraites : <strong><span id="gm-total-gems">0</span></strong></p>
+            <p>Par clic : <strong><span id="gm-dmg-click">1</span></strong> PV / clic,
+               <strong><span id="gm-gems-click">1</span></strong> gemme / clic</p>
+            <p>Extraction auto : <strong><span id="gm-dps">0</span></strong> PV / s</p>
+            <p>Chaîne (minées / transportées / vendues) :<br>
               <strong><span id="gm-prod-mined">0</span></strong> /
               <strong><span id="gm-prod-transported">0</span></strong> /
               <strong><span id="gm-prod-sold">0</span></strong> gemmes / s
             </p>
-            <p>Points de prestige : <strong><span id="gm-prestige-points">0</span></strong></p>
+            <p>Prestige : <strong><span id="gm-prestige-points">0</span></strong></p>
             <p id="gm-prestige-preview" class="muted"></p>
             <p id="gm-save-status" class="muted"></p>
           </article>
 
-          <article class="card" style="margin-top:1rem;">
-            <h2>Prestige & réinitialisation</h2>
-            <p>
-              En réinitialisant votre mine, vous gagnez des <strong>points de prestige</strong> basés sur le total
-              de gemmes extraites. Ces points servent à acheter des compétences permanentes.
+          <article class="card gm-card-compact" style="margin-top:0.75rem;">
+            <h2>Prestige</h2>
+            <p class="muted">
+              Réinitialisez votre mine pour gagner des points de prestige permanents.
             </p>
-            <button id="gm-prestige-btn" class="btn btn-outline">
+            <button id="gm-prestige-btn" class="btn btn-outline" style="width:100%;">
               Réinitialiser la mine et gagner du prestige
             </button>
           </article>
         </div>
 
-        <!-- Haut droite : classement + menus d’upgrades -->
+        <!-- Droite : classement + upgrades -->
         <div class="gm-right">
-          <article class="card">
-            <h2>Classement des mineurs</h2>
-            <p class="muted">
-              Classement basé sur un <strong>score</strong> = gemmes totales / jours d’activité.
-              Cela permet aux nouveaux joueurs motivés de rattraper les anciens, tout en récompensant
-              la constance.
+          <article class="card gm-card-compact gm-scroll-card">
+            <h2>Classement</h2>
+            <p class="muted" style="margin-bottom:0.4rem;">
+              Score = gemmes totales / jours d’activité.
             </p>
             <table class="gm-leaderboard">
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Joueur</th>
-                  <th style="text-align:right;">Gemmes totales</th>
+                  <th style="text-align:right;">Gemmes</th>
                   <th style="text-align:right;">Prestige</th>
                   <th style="text-align:right;">Score</th>
                 </tr>
@@ -109,30 +109,26 @@ include __DIR__ . '/partials/head.php';
             </table>
           </article>
 
-          <article class="card" style="margin-top:1rem;">
+          <article class="card gm-card-compact gm-scroll-card" style="margin-top:0.75rem;">
             <h2>Améliorations</h2>
-            <p class="muted">
-              Trois catégories : <strong>Extraction</strong>, <strong>Logistique</strong>, <strong>Vente</strong>.
-              Chaque achat débloque visuellement de nouveaux outils ou machines.
-            </p>
 
             <details class="gm-upgrade-group" open>
-              <summary>Extraction (mineurs & outils)</summary>
+              <summary>Extraction</summary>
               <div id="gm-upgrades-mining" class="gm-upgrade-list"></div>
             </details>
 
             <details class="gm-upgrade-group">
-              <summary>Logistique (transport)</summary>
+              <summary>Logistique</summary>
               <div id="gm-upgrades-logistics" class="gm-upgrade-list"></div>
             </details>
 
             <details class="gm-upgrade-group">
-              <summary>Vente (boutiques & marché)</summary>
+              <summary>Vente</summary>
               <div id="gm-upgrades-sales" class="gm-upgrade-list"></div>
             </details>
 
-            <details class="gm-upgrade-group" style="margin-top:0.5rem;">
-              <summary>Compétences de prestige</summary>
+            <details class="gm-upgrade-group">
+              <summary>Prestige</summary>
               <div id="gm-prestige-list" class="gm-upgrade-list"></div>
             </details>
           </article>
@@ -145,10 +141,10 @@ include __DIR__ . '/partials/head.php';
 <?php include __DIR__ . '/partials/footer.php'; ?>
 
 <style>
-/* Layout global du jeu */
+/* Layout serré pour éviter de scroller la page sur un écran de bureau */
 .gm-layout {
   display: grid;
-  grid-template-columns: 1.1fr 1.4fr 1.4fr;
+  grid-template-columns: 1.1fr 1.4fr 1.5fr;
   gap: 1rem;
   align-items: flex-start;
 }
@@ -159,6 +155,16 @@ include __DIR__ . '/partials/head.php';
   }
 }
 
+.gm-card-compact {
+  padding: 0.8rem 1rem;
+}
+
+.gm-scroll-card {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+/* Zone gemme */
 .gm-gem-area {
   background: #020617;
   border-radius: 1rem;
@@ -168,11 +174,10 @@ include __DIR__ . '/partials/head.php';
   text-align: center;
 }
 
-/* Conteneur de la gemme */
 .gm-gem {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 0.8rem auto;
+  width: 135px;
+  height: 135px;
+  margin: 0 auto 0.6rem auto;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -189,7 +194,7 @@ include __DIR__ . '/partials/head.php';
   filter: drop-shadow(0 8px 12px rgba(0,0,0,0.45));
 }
 
-/* Aura visuelle par tiers */
+/* Aura selon le tier */
 .gm-gem-tier0 { background: radial-gradient(circle at 30% 30%, #9ca3af, #020617); }
 .gm-gem-tier1 { background: radial-gradient(circle at 30% 30%, #38bdf8, #020617); }
 .gm-gem-tier2 { background: radial-gradient(circle at 30% 30%, #22c55e, #020617); }
@@ -211,62 +216,62 @@ include __DIR__ . '/partials/head.php';
 .gm-leaderboard {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
-  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
 }
 .gm-leaderboard th,
 .gm-leaderboard td {
-  padding: 0.25rem 0.3rem;
+  padding: 0.2rem 0.25rem;
   border-bottom: 1px solid #e5e7eb;
 }
 .gm-leaderboard th {
   text-align: left;
 }
 
-/* Groupes d’upgrades */
+/* Upgrades */
 .gm-upgrade-group {
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
 }
 .gm-upgrade-group summary {
   cursor: pointer;
   font-weight: 600;
+  font-size: 0.9rem;
 }
 .gm-upgrade-list {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
-/* Items d’upgrades */
 .gm-upgrade-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.5rem;
-  padding: 0.35rem 0.4rem;
+  padding: 0.3rem 0.4rem;
   border-radius: 0.5rem;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 .gm-upgrade-item h4 {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 .gm-upgrade-item p {
-  margin: 0.1rem 0;
+  margin: 0.08rem 0;
 }
 
 .gm-upgrade-main {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .gm-upgrade-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 8px rgba(15,23,42,0.3));
@@ -277,17 +282,18 @@ include __DIR__ . '/partials/head.php';
 // =============================
 // Config & état du jeu
 // =============================
-const GM_API_URL = '/gemminer_api.php';
+const GM_API_URL = 'gemminer_api.php';
 const GM_SAVE_INTERVAL_MS = 10000;
 
-// Types de minerais (tiers)
+// Types de minerais : HP croissants et récompenses croissantes
+// -> début : très rapide, ensuite ça se durcit
 const GM_ORE_TYPES = [
-  { name: 'Quartz terne',        emoji: '💠', baseHp: 100 },
-  { name: 'Malachite veineuse',  emoji: '🟢', baseHp: 300 },
-  { name: 'Fer profond',         emoji: '🧱', baseHp: 900 },
-  { name: 'Or ancien',           emoji: '🟡', baseHp: 2500 },
-  { name: 'Cristal arcanique',   emoji: '🔮', baseHp: 7500 },
-  { name: 'Gemme du Néant',      emoji: '🌀', baseHp: 20000 },
+  { name: 'Quartz terne',        baseHp: 30,    baseReward: 15 },
+  { name: 'Malachite veineuse',  baseHp: 150,   baseReward: 60 },
+  { name: 'Fer profond',         baseHp: 600,   baseReward: 200 },
+  { name: 'Or ancien',           baseHp: 2400,  baseReward: 700 },
+  { name: 'Cristal arcanique',   baseHp: 10000, baseReward: 2200 },
+  { name: 'Gemme du Néant',      baseHp: 60000, baseReward: 7000 },
 ];
 
 // Upgrades Extraction
@@ -295,25 +301,27 @@ const GM_UPGRADES_MINING = {
   handTools: {
     key: 'handTools',
     label: 'Outils à main',
-    description: 'Augmente légèrement les dégâts par clic.',
+    description: 'Légère augmentation des dégâts et des gemmes par clic.',
     baseCost: 20,
-    costMul: 1.15,
-    dmgPerLevel: 1
+    costMul: 1.2,
+    dmgPerLevel: 1,
+    gemPerLevel: 0.4
   },
   pickaxe: {
     key: 'pickaxe',
     label: 'Pioches améliorées',
-    description: 'Augmente fortement les dégâts par clic.',
+    description: 'Gros bonus de dégâts par clic.',
     baseCost: 150,
-    costMul: 1.17,
-    dmgPerLevel: 3
+    costMul: 1.22,
+    dmgPerLevel: 3,
+    gemPerLevel: 0.8
   },
   drill: {
     key: 'drill',
     label: 'Foreuses mécaniques',
     description: 'Augmente l’extraction automatique (PV/s).',
     baseCost: 400,
-    costMul: 1.2,
+    costMul: 1.25,
     dpsPerLevel: 2
   },
   megaDrill: {
@@ -321,17 +329,18 @@ const GM_UPGRADES_MINING = {
     label: 'Foreuse de chantier',
     description: 'Gros bonus d’extraction automatique.',
     baseCost: 2000,
-    costMul: 1.25,
+    costMul: 1.3,
     dpsPerLevel: 10
   },
   absurdEngine: {
     key: 'absurdEngine',
     label: 'Machine absurde interdimensionnelle',
-    description: 'Bonus fou de dégâts par clic et PV/s.',
+    description: 'Bonus important sur clics et extraction auto.',
     baseCost: 15000,
-    costMul: 1.3,
-    dmgPerLevel: 15,
-    dpsPerLevel: 30
+    costMul: 1.35,
+    dmgPerLevel: 10,
+    gemPerLevel: 3,
+    dpsPerLevel: 25
   }
 };
 
@@ -340,25 +349,25 @@ const GM_UPGRADES_LOGISTICS = {
   carts: {
     key: 'carts',
     label: 'Chariots de mine',
-    description: 'Améliore la fraction de gemmes effectivement transportées.',
+    description: 'Une plus grande partie de la production est transportée.',
     baseCost: 50,
-    costMul: 1.15,
-    effPerLevel: 0.05 // +5% de transport effectif
+    costMul: 1.18,
+    effPerLevel: 0.05
   },
   rail: {
     key: 'rail',
     label: 'Rail souterrain',
-    description: 'Grosse amélioration de transport.',
+    description: 'Gros gain de transport.',
     baseCost: 300,
-    costMul: 1.18,
+    costMul: 1.2,
     effPerLevel: 0.09
   },
   portal: {
     key: 'portal',
     label: 'Portails de transfert',
-    description: 'Le flux de transport devient presque instantané.',
+    description: 'Transport quasi instantané.',
     baseCost: 2500,
-    costMul: 1.23,
+    costMul: 1.25,
     effPerLevel: 0.15
   }
 };
@@ -368,17 +377,17 @@ const GM_UPGRADES_SALES = {
   stall: {
     key: 'stall',
     label: 'Petit stand de vente',
-    description: 'Vous vendez une partie des gemmes extraites.',
+    description: 'Vous vendez une fraction des gemmes transportées.',
     baseCost: 80,
-    costMul: 1.16,
+    costMul: 1.18,
     effPerLevel: 0.05
   },
   shop: {
     key: 'shop',
     label: 'Boutique en ville',
-    description: 'Les ventes deviennent beaucoup plus régulières.',
+    description: 'Les ventes deviennent plus régulières.',
     baseCost: 350,
-    costMul: 1.18,
+    costMul: 1.2,
     effPerLevel: 0.08
   },
   export: {
@@ -386,7 +395,7 @@ const GM_UPGRADES_SALES = {
     label: 'Contrats d’export',
     description: 'Vous vendez une grande partie de ce que vous transportez.',
     baseCost: 2000,
-    costMul: 1.22,
+    costMul: 1.25,
     effPerLevel: 0.12
   }
 };
@@ -404,23 +413,23 @@ const GM_PRESTIGE_UPGRADES = {
   clickBoost: {
     key: 'clickBoost',
     label: 'Technique de frappe',
-    description: '+25 % de dégâts par clic par niveau.',
+    description: '+20 % de dégâts par clic par niveau.',
     baseCost: 1,
     costGrowth: 1,
     maxLevel: 10
   },
   chainEfficiency: {
     key: 'chainEfficiency',
-    label: 'Chaîne complète optimisée',
-    description: '+5 % de productivité globale (minage → vente) par niveau.',
+    label: 'Chaîne optimisée',
+    description: '+5 % sur toute la chaîne minage → vente.',
     baseCost: 1,
     costGrowth: 1,
     maxLevel: 15
   },
   rareOreChance: {
     key: 'rareOreChance',
-    label: 'Chance de filon rare',
-    description: 'Chance d’obtenir des gemmes bonus lors de la destruction d’un gisement.',
+    label: 'Filon rare',
+    description: 'Chance d’obtenir un bonus de gemmes en changeant de minerai.',
     baseCost: 2,
     costGrowth: 1,
     maxLevel: 10
@@ -432,8 +441,8 @@ const GM_DEFAULT_STATE = {
   totalGems: 0,
   currentOre: {
     tier: 0,
-    hp: 100,
-    maxHp: 100,
+    hp: 30,
+    maxHp: 30,
     name: 'Quartz terne'
   },
   miningUpgrades: {},
@@ -451,6 +460,7 @@ const GM_DEFAULT_STATE = {
 let gmState = null;
 let gmDerived = {
   clickDmg: 1,
+  gemsPerClick: 1,
   dps: 0,
   minedPerSec: 0,
   transportedPerSec: 0,
@@ -464,33 +474,33 @@ let gmCanServerSave = false;
 function gmGetUpgradeIconPath(group, key) {
   if (group === 'miningUpgrades') {
     switch (key) {
-      case 'handTools':     return '/assets/gemminer/icons/mining_handtools.png';
-      case 'pickaxe':       return '/assets/gemminer/icons/mining_pickaxe.png';
-      case 'drill':         return '/assets/gemminer/icons/mining_drill.png';
-      case 'megaDrill':     return '/assets/gemminer/icons/mining_megadrill.png';
-      case 'absurdEngine':  return '/assets/gemminer/icons/mining_absurdengine.png';
+      case 'handTools':     return 'assets/gemminer/icons/mining_handtools.png';
+      case 'pickaxe':       return 'assets/gemminer/icons/mining_pickaxe.png';
+      case 'drill':         return 'assets/gemminer/icons/mining_drill.png';
+      case 'megaDrill':     return 'assets/gemminer/icons/mining_megadrill.png';
+      case 'absurdEngine':  return 'assets/gemminer/icons/mining_absurdengine.png';
     }
   }
   if (group === 'logisticsUpgrades') {
     switch (key) {
-      case 'carts':   return '/assets/gemminer/icons/logistics_carts.png';
-      case 'rail':    return '/assets/gemminer/icons/logistics_rail.png';
-      case 'portal':  return '/assets/gemminer/icons/logistics_portal.png';
+      case 'carts':   return 'assets/gemminer/icons/logistics_carts.png';
+      case 'rail':    return 'assets/gemminer/icons/logistics_rail.png';
+      case 'portal':  return 'assets/gemminer/icons/logistics_portal.png';
     }
   }
   if (group === 'salesUpgrades') {
     switch (key) {
-      case 'stall':   return '/assets/gemminer/icons/sales_stall.png';
-      case 'shop':    return '/assets/gemminer/icons/sales_shop.png';
-      case 'export':  return '/assets/gemminer/icons/sales_export.png';
+      case 'stall':   return 'assets/gemminer/icons/sales_stall.png';
+      case 'shop':    return 'assets/gemminer/icons/sales_shop.png';
+      case 'export':  return 'assets/gemminer/icons/sales_export.png';
     }
   }
   if (group === 'prestige') {
     switch (key) {
-      case 'globalDps':        return '/assets/gemminer/icons/prestige_globaldps.png';
-      case 'clickBoost':       return '/assets/gemminer/icons/prestige_clickboost.png';
-      case 'chainEfficiency':  return '/assets/gemminer/icons/prestige_chain.png';
-      case 'rareOreChance':    return '/assets/gemminer/icons/prestige_rareore.png';
+      case 'globalDps':        return 'assets/gemminer/icons/prestige_globaldps.png';
+      case 'clickBoost':       return 'assets/gemminer/icons/prestige_clickboost.png';
+      case 'chainEfficiency':  return 'assets/gemminer/icons/prestige_chain.png';
+      case 'rareOreChance':    return 'assets/gemminer/icons/prestige_rareore.png';
     }
   }
   return '';
@@ -538,9 +548,10 @@ function gmComputePrestigeGain(state) {
   return Math.floor(t / 50000); // 1 point / 50 000 gemmes extraites
 }
 
-// Dérivées : dégâts / clic, DPS, chaîne de prod
+// Dérivées : dégâts / clic, gemmes / clic, DPS + chaîne
 function gmComputeDerived(state) {
   let click = 1;
+  let gemsPerClick = 1;
   let dps   = 0;
 
   // Extraction
@@ -549,21 +560,23 @@ function gmComputeDerived(state) {
     const lvl = gmGetUpgradeLevel('miningUpgrades', k);
     if (!lvl) return;
     if (cfg.dmgPerLevel) click += cfg.dmgPerLevel * lvl;
+    if (cfg.gemPerLevel) gemsPerClick += cfg.gemPerLevel * lvl;
     if (cfg.dpsPerLevel) dps   += cfg.dpsPerLevel * lvl;
   });
 
-  // Prestige click & dps
+  // Prestige clic & dps
   const clickPrestige = gmGetPrestigeLevel('clickBoost');
   const dpsPrestige   = gmGetPrestigeLevel('globalDps');
   const chainPrestige = gmGetPrestigeLevel('chainEfficiency');
 
-  click *= (1 + 0.25 * clickPrestige);
-  dps   *= (1 + 0.15 * dpsPrestige);
+  click        *= (1 + 0.20 * clickPrestige);
+  gemsPerClick *= (1 + 0.15 * clickPrestige); // les mêmes points rendent le clic plus rentable
+  dps          *= (1 + 0.15 * dpsPrestige);
 
   // Base “minedPerSec” = DPS
   let minedPerSec = dps;
 
-  // Logistique et vente : on ne fait pas une vraie file mais une eff globale
+  // Logistique et vente
   let transportEff = 0;
   Object.keys(GM_UPGRADES_LOGISTICS).forEach(k => {
     const cfg = GM_UPGRADES_LOGISTICS[k];
@@ -580,11 +593,10 @@ function gmComputeDerived(state) {
     salesEff += cfg.effPerLevel * lvl;
   });
 
-  // Cap maximal à 95% pour éviter 100%
   transportEff = Math.min(0.95, transportEff);
   salesEff     = Math.min(0.95, salesEff);
 
-  let transportedPerSec = minedPerSec * (0.1 + transportEff); // mini 10% même sans upgrades
+  let transportedPerSec = minedPerSec * (0.1 + transportEff);
   let soldPerSec        = transportedPerSec * (0.1 + salesEff);
 
   const chainBoost = 1 + 0.05 * chainPrestige;
@@ -594,6 +606,7 @@ function gmComputeDerived(state) {
 
   return {
     clickDmg: click,
+    gemsPerClick,
     dps,
     minedPerSec,
     transportedPerSec,
@@ -613,6 +626,7 @@ function gmRender(updateDerived = false) {
   const gemsEl       = document.getElementById('gm-gems');
   const totalGemsEl  = document.getElementById('gm-total-gems');
   const dmgClickEl   = document.getElementById('gm-dmg-click');
+  const gemsClickEl  = document.getElementById('gm-gems-click');
   const dpsEl        = document.getElementById('gm-dps');
   const prodMinedEl  = document.getElementById('gm-prod-mined');
   const prodTransEl  = document.getElementById('gm-prod-transported');
@@ -628,6 +642,7 @@ function gmRender(updateDerived = false) {
   if (gemsEl)      gemsEl.textContent     = Math.floor(g.gems);
   if (totalGemsEl) totalGemsEl.textContent= Math.floor(g.totalGems);
   if (dmgClickEl)  dmgClickEl.textContent = gmDerived.clickDmg.toFixed(1);
+  if (gemsClickEl) gemsClickEl.textContent= gmDerived.gemsPerClick.toFixed(1);
   if (dpsEl)       dpsEl.textContent      = gmDerived.dps.toFixed(1);
   if (prodMinedEl) prodMinedEl.textContent= gmDerived.minedPerSec.toFixed(1);
   if (prodTransEl) prodTransEl.textContent= gmDerived.transportedPerSec.toFixed(1);
@@ -639,23 +654,24 @@ function gmRender(updateDerived = false) {
 
   if (oreHpEl)    oreHpEl.textContent    = Math.max(0, g.currentOre.hp.toFixed(1));
   if (oreMaxHpEl) oreMaxHpEl.textContent = g.currentOre.maxHp.toFixed(1);
-  if (oreInfoEl)  oreInfoEl.textContent  = `${oreType.name} – PV : ${Math.max(0, g.currentOre.hp.toFixed(1))} / ${g.currentOre.maxHp.toFixed(1)}`;
+  if (oreInfoEl)  oreInfoEl.textContent  =
+      `${oreType.name} – PV : ${Math.max(0, g.currentOre.hp.toFixed(1))} / ${g.currentOre.maxHp.toFixed(1)}`;
 
   if (gemVisualEl) {
     gemVisualEl.className = 'gm-gem gm-gem-tier' + Math.min(5, oreTier);
   }
   if (gemImgEl) {
     const tierClamped = Math.min(5, oreTier);
-    gemImgEl.src = '/assets/gemminer/gems/gem_tier' + tierClamped + '.png';
+    gemImgEl.src = 'assets/gemminer/gems/gem_tier' + tierClamped + '.png';
     gemImgEl.alt = oreType.name;
   }
 
   if (prestigePrev) {
     const gain = gmComputePrestigeGain(gmState);
     if (gain > 0) {
-      prestigePrev.textContent = `En réinitialisant maintenant, vous gagneriez environ ${gain} point(s) de prestige.`;
+      prestigePrev.textContent = `Réinitialisation : environ ${gain} point(s) de prestige.`;
     } else {
-      prestigePrev.textContent = `Extrayez davantage de gemmes pour débloquer vos premiers points de prestige.`;
+      prestigePrev.textContent = `Extrayez plus de gemmes pour débloquer vos premiers points de prestige.`;
     }
   }
 
@@ -697,7 +713,7 @@ function gmRenderUpgrades() {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:0.85rem;">Coût : ${cost} gemmes</div>
+        <div style="font-size:0.8rem;">Coût : ${cost} gemmes</div>
         <button class="btn btn-primary" data-upgrade-group="miningUpgrades" data-upgrade="${cfg.key}">Acheter</button>
       </div>
     `;
@@ -722,7 +738,7 @@ function gmRenderUpgrades() {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:0.85rem;">Coût : ${cost} gemmes</div>
+        <div style="font-size:0.8rem;">Coût : ${cost} gemmes</div>
         <button class="btn btn-primary" data-upgrade-group="logisticsUpgrades" data-upgrade="${cfg.key}">Acheter</button>
       </div>
     `;
@@ -747,7 +763,7 @@ function gmRenderUpgrades() {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:0.85rem;">Coût : ${cost} gemmes</div>
+        <div style="font-size:0.8rem;">Coût : ${cost} gemmes</div>
         <button class="btn btn-primary" data-upgrade-group="salesUpgrades" data-upgrade="${cfg.key}">Acheter</button>
       </div>
     `;
@@ -787,7 +803,7 @@ function gmRenderPrestige() {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:0.85rem;">Coût : ${cost} point(s)</div>
+        <div style="font-size:0.8rem;">Coût : ${cost} point(s)</div>
         <button class="btn btn-outline" data-prestige="${cfg.key}">Acheter</button>
       </div>
     `;
@@ -809,7 +825,13 @@ function gmMineClick() {
   if (!gmState) return;
   const ore = gmState.currentOre;
   const dmg = gmDerived.clickDmg;
+  const gemsGain = gmDerived.gemsPerClick;
 
+  // Gemmes gagnées à chaque clic
+  gmState.gems      += gemsGain;
+  gmState.totalGems += gemsGain;
+
+  // Progression sur le minerai
   ore.hp -= dmg;
   if (ore.hp < 0) ore.hp = 0;
 
@@ -828,12 +850,13 @@ function gmMineClick() {
 function gmDestroyOre() {
   const oreTier = gmState.currentOre.tier || 0;
   const oreType = GM_ORE_TYPES[oreTier] || GM_ORE_TYPES[0];
-  // Récompense = HP max / 10 à la louche
-  const gain = Math.max(1, Math.floor(oreType.baseHp / 10));
+
+  // Récompense forte à chaque minerai cassé
+  let gain = oreType.baseReward;
   gmState.gems      += gain;
   gmState.totalGems += gain;
 
-  // Chance de gain bonus via prestige rareOreChance
+  // Chance de bonus rare via prestige
   const rareLvl = gmGetPrestigeLevel('rareOreChance');
   if (rareLvl > 0) {
     const chance = Math.min(0.5, rareLvl * 0.04); // 4% / niveau, cap 50%
@@ -844,6 +867,7 @@ function gmDestroyOre() {
     }
   }
 
+  // On monte de tier, ce qui rend le prochain minerai plus long à casser
   const nextTier = Math.min(GM_ORE_TYPES.length - 1, oreTier + 1);
   const nextType = GM_ORE_TYPES[nextTier];
   gmState.currentOre = {
@@ -933,7 +957,7 @@ function gmDoPrestige() {
 
   gmDerived = gmComputeDerived(gmState);
   gmRender(false);
-  gmSaveNow(); // sauvegarde immédiate après prestige
+  gmSaveNow();
 }
 
 // =============================
@@ -943,7 +967,7 @@ function gmTick() {
   if (!gmState) return;
   gmDerived = gmComputeDerived(gmState);
 
-  // Extraction auto => on fait comme si on réduisait les PV du gisement en continu
+  // Extraction auto sur le minerai
   let dps = gmDerived.dps;
   if (dps > 0) {
     gmState.currentOre.hp -= dps;
@@ -952,7 +976,7 @@ function gmTick() {
     }
   }
 
-  // On considère la prod/s comme "vendue" = gemmes supplémentaires
+  // Production vendue -> gemmes
   const sold = gmDerived.soldPerSec;
   if (sold > 0) {
     gmState.gems      += sold;
@@ -989,7 +1013,7 @@ function gmSaveNow() {
 }
 
 function gmScheduleSave() {
-  // Pour l’instant on laisse le timer gérer, tu peux ajouter un debounce si besoin
+  // On laisse le timer faire le travail, pas de debounce nécessaire pour l’instant
 }
 
 // =============================
