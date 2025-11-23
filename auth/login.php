@@ -1,44 +1,58 @@
 <?php
 // auth/login.php
 session_start();
+
+// Si tu veux empêcher un utilisateur déjà connecté de voir la page de login,
+// tu peux décommenter ce bloc plus tard. Pour l'instant on le laisse COMMENTÉ.
+/*
+if (isset($_SESSION['user_id'])) {
+    header('Location: /games.php');
+    exit;
+}
+*/
+
 require __DIR__ . '/../config/db.php';
 
-$currentPage     = '';
-$pageTitle       = 'Connexion – Bialadev Studio';
-$pageDescription = 'Connexion à votre compte joueur pour le mini-jeu Cookie Dev.';
-$pageRobots      = 'noindex,follow';
-
 $errors = [];
-$email  = '';
+$email = '';
+$redirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '/games.php';
 
-// URL vers laquelle rediriger après login (par exemple devcookie)
-$redirect = $_POST['redirect'] ?? $_GET['redirect'] ?? '/games.php';
-header('Location: ' . $redirect);
-exit;
-
-
+// Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "L'adresse e-mail n'est pas valide.";
+    if ($email === '' || $password === '') {
+        $errors[] = "Veuillez renseigner l'email et le mot de passe.";
     } else {
-        $stmt = $pdo->prepare('SELECT id, pseudo, password_hash FROM users WHERE email = :email');
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
+        try {
+            $stmt = $pdo->prepare('SELECT id, pseudo, email, password_hash FROM users WHERE email = ? LIMIT 1');
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+        } catch (PDOException $e) {
+            $errors[] = "Erreur de connexion à la base de données.";
+            $user = null;
+        }
 
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            $errors[] = "Identifiants incorrects.";
-        } else {
-            $_SESSION['user_id'] = (int)$user['id'];
+        if ($user && password_verify($password, $user['password_hash'])) {
+            // Connexion OK
+            $_SESSION['user_id'] = $user['id'];
             $_SESSION['pseudo']  = $user['pseudo'];
 
+            // Redirection après login
             header('Location: ' . $redirect);
             exit;
+        } else {
+            $errors[] = "Identifiants incorrects.";
         }
     }
 }
+
+// Variables pour le head.php
+$currentPage     = ''; // ou 'auth' si tu as une rubrique
+$pageTitle       = 'Connexion – Bialadev Studio';
+$pageDescription = 'Connexion au compte Bialadev Studio pour accéder aux jeux et à la sauvegarde.';
+$pageRobots      = 'noindex,nofollow';
 
 include __DIR__ . '/../partials/head.php';
 ?>
@@ -47,10 +61,11 @@ include __DIR__ . '/../partials/head.php';
 
 <main>
   <section class="section">
-    <div class="container">
+    <div class="container" style="max-width: 480px;">
       <h1>Connexion</h1>
-      <p>
-        Connectez-vous pour <strong>retrouver votre progression</strong> sur le mini-jeu Cookie Dev.
+      <p class="section-intro">
+        Connectez-vous pour sauvegarder votre progression, apparaître dans les classements et
+        accéder pleinement aux démos.
       </p>
 
       <?php if (!empty($errors)): ?>
@@ -63,23 +78,38 @@ include __DIR__ . '/../partials/head.php';
         </div>
       <?php endif; ?>
 
-      <form method="post" class="form">
+      <form method="post" action="/auth/login.php">
+        <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($redirect, ENT_QUOTES, 'UTF-8'); ?>">
+
         <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" required
-                 value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>">
+          <label for="email">Adresse e-mail</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>"
+          >
         </div>
 
         <div class="form-group">
           <label for="password">Mot de passe</label>
-          <input type="password" id="password" name="password" required>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+          >
         </div>
 
-        <button type="submit" class="btn btn-primary">Se connecter</button>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+          Se connecter
+        </button>
       </form>
 
-      <p style="margin-top:1rem;">
-        Pas encore de compte ? <a href="/auth/register.php">Créer un compte</a>.
+      <p class="muted" style="margin-top:1rem;">
+        Pas encore de compte ?
+        <a href="/auth/register.php?redirect=/games.php">Créer un compte</a>
       </p>
     </div>
   </section>
