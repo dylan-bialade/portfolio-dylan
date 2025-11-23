@@ -12,7 +12,10 @@ $errors = [];
 $email  = '';
 
 // URL vers laquelle rediriger après login (par exemple devcookie)
-$redirect = $_GET['redirect'] ?? '/devcookie.php';
+$redirect = $_POST['redirect'] ?? $_GET['redirect'] ?? '/games.php';
+header('Location: ' . $redirect);
+exit;
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');

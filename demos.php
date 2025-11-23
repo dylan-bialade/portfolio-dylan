@@ -92,8 +92,7 @@ include __DIR__ . '/partials/head.php';
             <a href="/devcookie.php" class="btn btn-primary">Jouer à Cookie Dev</a>
             <p style="margin-top:0.6rem; font-size:0.9rem;">
               Vous pouvez jouer en invité, mais si vous <a href="/auth/register.php">créez un compte</a>
-              ou <a href="/auth/login.php?redirect=/devcookie.php">vous connectez</a>, votre progression
-              sera sauvegardée.
+              ou <a href="/auth/login.php?redirect=/games.php">Connexion</a>, votre progression sera sauvegardée.
             </p>
           </div>
         </article>
