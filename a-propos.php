@@ -1,11 +1,12 @@
 <?php
 $currentPage = 'about';
 $pageTitle = "À propos";
+include __DIR__ . '/partials/head.php';
 ?>
-<?php require __DIR__ . '/partials/header.php'; ?>
+
 
 <main>
-
+<?php include __DIR__ . '/partials/header.php'; ?>
   <!-- HERO (utilise .hero / .hero-inner / .hero-panel) -->
   <section class="hero">
     <div class="container hero-inner">
