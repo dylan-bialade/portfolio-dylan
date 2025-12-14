@@ -17,10 +17,19 @@ if (!isset($currentPage)) {
       <a href="/index.php" class="nav-link <?php echo $currentPage === 'home' ? 'nav-link-active' : ''; ?>">Accueil</a>
       <a href="/projects.php" class="nav-link <?php echo $currentPage === 'projects' ? 'nav-link-active' : ''; ?>">Projets</a>
       <a href="/demos.php" class="nav-link <?php echo $currentPage === 'demos' ? 'nav-link-active' : ''; ?>">Démos</a>
-      <a href="games.php" class="nav-link <?php echo $currentPage === 'demos' ? 'nav-link-active' : ''; ?>">Jeux</a>
+
+      <!-- FIX : games doit tester 'games' -->
+      <a href="/games.php" class="nav-link <?php echo $currentPage === 'games' ? 'nav-link-active' : ''; ?>">Jeux</a>
+
       <a href="/tarifs.php" class="nav-link <?php echo $currentPage === 'tarifs' ? 'nav-link-active' : ''; ?>">Tarifs</a>
       <a href="/veille.php" class="nav-link <?php echo $currentPage === 'veille' ? 'nav-link-active' : ''; ?>">Veille</a>
       <a href="/contact.php" class="nav-link <?php echo $currentPage === 'contact' ? 'nav-link-active' : ''; ?>">Contact</a>
+
+      <!-- Ajout À propos dans le même style -->
+      <a href="/a-propos.php" class="nav-link <?php echo $currentPage === 'about' ? 'nav-link-active' : ''; ?>">À propos</a>
+    </nav>
+
+
 
       <!-- Liens vers l’espace modèles vitrines -->
       <a href="/templates/vitrine-restaurant/index.html" class="nav-link" target="_blank">Modèles vitrines</a>
