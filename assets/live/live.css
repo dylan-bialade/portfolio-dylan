@@ -1,0 +1,128 @@
+/* assets/live/live.css */
+/* Styles Live (widget sender global + receiver) */
+
+.live-widget {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
+  max-width: min(460px, calc(100vw - 32px));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, .92);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.live-widget-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.live-widget strong {
+  font-weight: 700;
+}
+
+.live-state {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 0.85rem;
+  opacity: .95;
+}
+
+.live-muted { opacity: .85; font-size: .95rem; }
+
+.live-widget button {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(30, 41, 59, .65);
+  color: inherit;
+  cursor: pointer;
+}
+
+.live-widget button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.live-widget .live-mini {
+  margin-left: auto;
+}
+
+.live-receiver-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .live-receiver-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.live-receiver-panel, .live-receiver-player {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, .25);
+  padding: 14px;
+}
+
+.live-receiver-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.live-streams-list {
+  display: grid;
+  gap: 10px;
+}
+
+.live-stream-item {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(2, 6, 23, .45);
+}
+
+.live-stream-item .title {
+  font-weight: 700;
+}
+
+.live-stream-item .meta {
+  opacity: .85;
+  font-size: .95rem;
+  margin-top: 2px;
+}
+
+.live-stream-item button {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(30, 41, 59, .65);
+  color: inherit;
+  cursor: pointer;
+}
+
+.live-receiver-player video {
+  width: 100%;
+  max-height: 65vh;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: #000;
+}
+
+.live-receiver-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}

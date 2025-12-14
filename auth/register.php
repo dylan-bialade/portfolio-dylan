@@ -53,8 +53,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $userId;
             $_SESSION['pseudo']  = $pseudo;
 
+            // Defaults Live (viewer OFF / sender ON)
+            $_SESSION['can_view_live']   = 0;
+            $_SESSION['can_stream_live'] = 1;
+            $_SESSION['live_autostream'] = 0;
+            $_SESSION['live_stream_key'] = null;
+            $_SESSION['live_label']      = null;
+
+
             // Redirige vers le jeu
-            header('Location: /devcookie.php');
+            header('Location: /me-decouvrir.php');
             exit;
         }
     }

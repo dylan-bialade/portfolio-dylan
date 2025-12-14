@@ -23,6 +23,7 @@ if (!isset($pageRobots)) {
 
   <!-- CSS principal -->
   <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/live/live.css">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XRK50F6YD0"></script>

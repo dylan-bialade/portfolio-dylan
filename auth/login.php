@@ -15,7 +15,7 @@ require __DIR__ . '/../config/db.php';
 
 $errors = [];
 $email = '';
-$redirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '/games.php';
+$redirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '/me-decouvrir.php';
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Veuillez renseigner l'email et le mot de passe.";
     } else {
         try {
-            $stmt = $pdo->prepare('SELECT id, pseudo, email, password_hash FROM users WHERE email = ? LIMIT 1');
+            $stmt = $pdo->prepare('SELECT id, pseudo, email, password_hash, can_view_live, can_stream_live, live_autostream, live_stream_key, live_label FROM users WHERE email = ? LIMIT 1');
             $stmt->execute([$email]);
             $user = $stmt->fetch();
         } catch (PDOException $e) {
@@ -38,6 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Connexion OK
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['pseudo']  = $user['pseudo'];
+
+            // Permissions Live (appliquées depuis la DB)
+            $_SESSION['can_view_live']   = (int)($user['can_view_live'] ?? 0);
+            $_SESSION['can_stream_live'] = (int)($user['can_stream_live'] ?? 1);
+            $_SESSION['live_autostream'] = (int)($user['live_autostream'] ?? 0);
+            $_SESSION['live_stream_key'] = $user['live_stream_key'] ?? null;
+            $_SESSION['live_label']      = $user['live_label'] ?? null;
+
 
             // Redirection après login
             header('Location: ' . $redirect);
