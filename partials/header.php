@@ -26,7 +26,8 @@ if (!isset($currentPage)) {
       <a href="/contact.php" class="nav-link <?php echo $currentPage === 'contact' ? 'nav-link-active' : ''; ?>">Contact</a>
 
       <!-- Ajout À propos dans le même style -->
-      <a href="/a-propos.php" class="nav-link <?php echo $currentPage === 'about' ? 'nav-link-active' : ''; ?>">À propos</a>
+     <a href="/a-propos.php" class="nav-link <?php echo $currentPage === 'about' ? 'nav-link-active' : ''; ?>">À propos</a>
+
     </nav>
 
 

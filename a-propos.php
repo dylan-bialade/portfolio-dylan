@@ -4,201 +4,212 @@ $pageTitle = "À propos";
 ?>
 <?php require __DIR__ . '/partials/header.php'; ?>
 
-<main class="main about">
+<main>
 
-  <!-- INTRO / POSITIONNEMENT -->
-  <section class="section">
-    <div class="container">
-      <h1>À propos</h1>
+  <!-- HERO (utilise .hero / .hero-inner / .hero-panel) -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <div class="hero-chip">Profil professionnel</div>
+        <h1>À propos</h1>
 
-      <p class="about-lead">
-        Je suis <strong>Dylan Bialade</strong>, étudiant en <strong>développement</strong> (BTS SIO option SLAM) avec une
-        vraie culture du <strong>terrain</strong>. Ce qui me caractérise le plus : je suis <strong>sérieux</strong>,
-        <strong>impliqué</strong>, et je m’investis pleinement dans chaque poste que j’occupe — que ce soit en dev, en support,
-        en vente, en animation ou en restauration.
-      </p>
+        <p class="hero-subtitle">
+          Je m’appelle <strong>Dylan Bialade</strong>. Je suis un profil <strong>sérieux</strong> et <strong>impliqué</strong> :
+          je m’investis pleinement dans chaque poste que j’occupe, que ce soit en développement, en support, en vente,
+          en animation ou en restauration.
+        </p>
 
-      <div class="about-badges">
-        <span class="about-badge">Fiabilité / régularité</span>
-        <span class="about-badge">Sens du service</span>
-        <span class="about-badge">Travail d’équipe</span>
-        <span class="about-badge">Autonomie</span>
-        <span class="about-badge">Résolution de problèmes</span>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="/projects.php">Voir mes projets</a>
+          <a class="btn btn-outline" href="/contact.php">Me contacter</a>
+          <a class="btn btn-outline" href="https://github.com/dylan-bialade" target="_blank" rel="noopener">GitHub</a>
+        </div>
+
+        <p class="hero-note">
+          Mon objectif : apporter de la fiabilité, une vraie mentalité “terrain” et livrer des solutions utiles, maintenables et propres.
+        </p>
       </div>
 
-      <div class="about-actions">
-        <a class="btn" href="/projects.php">Voir mes projets</a>
+      <aside class="hero-panel">
+        <div class="hero-chip">Ce que tu peux attendre de moi</div>
+        <h2>Sérieux, constance, et sens du service</h2>
+        <ul class="hero-list">
+          <li><strong>Implication :</strong> je prends les responsabilités à cœur (entreprise familiale, équipe, procédures).</li>
+          <li><strong>Polyvalence :</strong> web/API, scripts, Android/Arduino + expérience client et opérationnelle.</li>
+          <li><strong>Esprit “résolution” :</strong> diagnostic, priorisation, communication claire (support / ticketing).</li>
+          <li><strong>Fiabilité :</strong> capable de tenir le rythme et la qualité même en environnement exigeant.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- SECTION : Ce qui me définit -->
+  <section class="section">
+    <div class="container">
+      <h2>Ce qui me définit</h2>
+      <p class="section-intro">
+        Je combine une base technique (développement, automatisation, support) avec une vraie expérience “terrain”
+        (vente, animation, restauration). Résultat : je suis à l’aise autant dans la production que dans la relation et l’exécution.
+      </p>
+
+      <div class="grid services-grid">
+        <div class="card card-service">
+          <h3>Sérieux & implication</h3>
+          <p>
+            Je m’implique dans n’importe quel poste : respect des consignes, fiabilité, constance, et volonté d’apprendre vite.
+          </p>
+        </div>
+
+        <div class="card card-service">
+          <h3>Entreprise familiale depuis mes 14 ans</h3>
+          <p>
+            J’ai grandi avec la culture du travail : présence régulière, sens des responsabilités, et exigence de résultat.
+            (Sur mes CV, Les Serres du Jansau apparaît sur plusieurs périodes, dont une activité continue en vente/conseil). 
+          </p>
+        </div>
+
+        <div class="card card-service">
+          <h3>Culture du service</h3>
+          <p>
+            Support/ticketing, vente, animation : je sais écouter, reformuler, expliquer et trouver une solution. La qualité
+            de service est un réflexe chez moi.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION ALT : Expériences (preuves) -->
+  <section class="section section-alt">
+    <div class="container">
+      <h2>Mes expériences (preuves concrètes)</h2>
+      <p class="section-intro">
+        Chaque expérience m’a apporté une compétence transférable : discipline, gestion du stress, relationnel, rigueur,
+        et capacité à livrer.
+      </p>
+
+      <div class="grid projects-grid">
+
+        <div class="card project-card">
+          <h2>Les Serres du Jansau (Gaillac) — Vente / conseil horticulture</h2>
+          <div class="project-tech">Entreprise familiale • Relation client • Encaissement</div>
+          <p>
+            Conseil et vente, encaissement, accueil, relation client. Expérience sur plusieurs années (2020–2025 sur un de tes CV),
+            et sur différentes périodes dans tes autres CV.
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>Les Serres du Jansau — Arduino & Android</h2>
+          <div class="project-tech">Embarqué • Mobile • RGPD</div>
+          <p>
+            Développement d’une solution technique d’analyse/mesure liée à l’arrosage + application Android (création/gestion comptes,
+            logique RGPD selon CV).
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>Ocsalis — Web / API & scripts PowerShell</h2>
+          <div class="project-tech">Automatisation • Serveurs • API OVH</div>
+          <p>
+            Scripts PowerShell de configuration de serveurs et développement d’une solution web/API pour la gestion de serveurs OVH
+            (selon tes CV).
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>Quincaillerie Angles — Support SI / ticketing</h2>
+          <div class="project-tech">Incidents • Dépannage • Service</div>
+          <p>
+            Gestion des incidents, dépannage, installations, outils de ticketing. Une vraie école du diagnostic et de la communication.
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>McDonald’s (Aurillac) — Équipier polyvalent (CDI)</h2>
+          <div class="project-tech">Rythme • Procédures • Esprit d’équipe</div>
+          <p>
+            Service et préparation en respectant des protocoles stricts, travail en équipe, gestion du stress et du temps.
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>Animation — COUGOUS / RECREA’BRENS</h2>
+          <div class="project-tech">Responsabilité • Pédagogie • Gestion de groupe</div>
+          <p>
+            Encadrement et animation d’enfants (6–14 ans) sur périodes de vacances scolaires : organisation, sécurité, communication.
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>EDS Électronique — Réparation / maintenance</h2>
+          <div class="project-tech">Diagnostic • Matériel • Rigueur</div>
+          <p>
+            Réparation de matériel multimédia et approche technique terrain.
+          </p>
+        </div>
+
+        <div class="card project-card">
+          <h2>Chambre des Métiers et de l’Artisanat</h2>
+          <div class="project-tech">Cadre pro • Méthode</div>
+          <p>
+            Expérience en structure (mentionnée sur tes CV), dans un cadre plus institutionnel.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="section-cta-center">
+        <a class="btn btn-primary" href="/projects.php">Voir mes projets</a>
         <a class="btn btn-outline" href="/contact.php">Me contacter</a>
-        <a class="btn btn-ghost" href="https://github.com/dylan-bialade" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
   </section>
 
-  <!-- SERIEUX / IMPLICATION (LA PARTIE QUE TU VEUX VRAIMENT METTRE EN AVANT) -->
+  <!-- SECTION : Compétences -->
   <section class="section">
     <div class="container">
-      <h2>Mon sérieux, ce n’est pas une phrase : c’est un historique</h2>
-
-      <div class="about-grid">
-        <div class="about-card">
-          <h3>Entreprise familiale : constance et sens des responsabilités</h3>
-          <p>
-            J’ai travaillé dans l’entreprise familiale (Les Serres du Jansau) sur la durée, avec des missions concrètes :
-            <strong>conseil client</strong>, <strong>vente</strong>, <strong>encaissement</strong>, tenue et organisation.
-            C’est une expérience qui m’a appris à être fiable, à m’impliquer, et à “faire tourner” une activité au quotidien.
-            :contentReference[oaicite:4]{index=4}
-          </p>
-          <ul class="about-list">
-            <li><strong>Relation client</strong> : écoute, compréhension du besoin, conseil</li>
-            <li><strong>Rigueur</strong> : caisse, procédures, qualité de service</li>
-            <li><strong>Implication</strong> : on ne “bâcle” pas quand l’activité dépend de toi</li>
-          </ul>
-          <p class="about-note">
-            Tu m’as indiqué que tu y travailles <strong>depuis tes 14 ans</strong> : je peux l’afficher tel quel sur le site (c’est très valorisant),
-            ou le formuler plus neutre (“depuis l’adolescence”) si tu préfères.
-          </p>
-        </div>
-
-        <div class="about-card">
-          <h3>Restauration : discipline, rythme, esprit d’équipe</h3>
-          <p>
-            Mon CDI d’équipier polyvalent chez McDonald’s m’a renforcé sur le <strong>rythme</strong>, la <strong>discipline</strong>,
-            le <strong>respect des protocoles</strong> et la <strong>gestion du stress</strong> — des qualités directement utiles en entreprise.
-            :contentReference[oaicite:5]{index=5}
-          </p>
-          <ul class="about-list">
-            <li>Travail d’équipe, réactivité, fiabilité</li>
-            <li>Gestion du temps, procédures, qualité</li>
-            <li>Tenir un niveau constant, même en rush</li>
-          </ul>
-        </div>
-
-        <div class="about-card">
-          <h3>Animation : pédagogie, responsabilité, confiance</h3>
-          <p>
-            L’animation (contrats d’engagement à l’éducation) m’a appris la <strong>responsabilité</strong>, la <strong>pédagogie</strong>
-            et la gestion de groupe (jeunes 6–14 ans). Ça prouve ma capacité à prendre en charge, organiser et communiquer clairement.
-            :contentReference[oaicite:6]{index=6}
-          </p>
-          <ul class="about-list">
-            <li>Gestion de groupe, sécurité, organisation</li>
-            <li>Communication claire, posture responsable</li>
-            <li>Transmission (utile en équipe dev aussi)</li>
-          </ul>
-        </div>
-
-        <div class="about-card">
-          <h3>Support / SI : diagnostic et sens du service</h3>
-          <p>
-            En environnement SI (Quincaillerie Angles), j’ai fait de la <strong>gestion d’incidents</strong> et du dépannage, avec logique
-            service et outils de ticketing selon CV. Ça développe un vrai réflexe : comprendre vite, résoudre, et expliquer.
-            :contentReference[oaicite:7]{index=7} :contentReference[oaicite:8]{index=8}
-          </p>
-          <ul class="about-list">
-            <li>Analyse rapide, priorisation, résolution</li>
-            <li>Communication avec utilisateurs / équipes</li>
-            <li>Pragmatisme : résultat et continuité de service</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- EXPERIENCES TECH (EN MODE “PREUVES”) -->
-  <section class="section">
-    <div class="container">
-      <h2>Expériences techniques</h2>
-
-      <div class="about-timeline">
-        <div class="about-timeline-item">
-          <div class="about-timeline-tag">Web / Scripts</div>
-          <h3>Ocsalis — scripts PowerShell & web/API (OVH)</h3>
-          <p>
-            Développement de scripts PowerShell de configuration serveurs + développement d’une solution web/API pour la gestion de serveurs OVH.
-            :contentReference[oaicite:9]{index=9}
-          </p>
-        </div>
-
-        <div class="about-timeline-item">
-          <div class="about-timeline-tag">Arduino / Android</div>
-          <h3>EURL Les Serres du Jansau — solution d’analyse arrosage & appli Android</h3>
-          <p>
-            Développement d’une solution technique d’analyse de l’arrosage + application Android (gestion de comptes / fidélisation, logique RGPD selon CV).
-            :contentReference[oaicite:10]{index=10}
-          </p>
-        </div>
-
-        <div class="about-timeline-item">
-          <div class="about-timeline-tag">Électronique</div>
-          <h3>EDS Électronique — réparation & maintenance</h3>
-          <p>
-            Réparation de matériel multimédia / approche technique terrain.
-            :contentReference[oaicite:11]{index=11}
-          </p>
-        </div>
-
-        <div class="about-timeline-item">
-          <div class="about-timeline-tag">Structure / environnement pro</div>
-          <h3>Chambre des Métiers et de l’Artisanat — expérience en structure</h3>
-          <p>
-            Expérience mentionnée sur tes CV (Onet-le-Château).
-            :contentReference[oaicite:12]{index=12}
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- COMPETENCES + PROFIL -->
-  <section class="section">
-    <div class="container">
-      <h2>Compétences & posture professionnelle</h2>
-
-      <div class="about-grid">
-        <div class="about-card">
-          <h3>Technos / domaines</h3>
-          <p>
-            PHP, SQL, Java, JavaScript, HTML/CSS, PowerShell, Arduino, Android (selon CV).
-            :contentReference[oaicite:13]{index=13} :contentReference[oaicite:14]{index=14}
-          </p>
-        </div>
-
-        <div class="about-card">
-          <h3>Soft skills (ce qui me rend efficace)</h3>
-          <ul class="about-list">
-            <li><strong>Sérieux & implication</strong> : je prends les choses à cœur</li>
-            <li><strong>Fiabilité</strong> : ponctualité, constance, respect des consignes</li>
-            <li><strong>Esprit d’équipe</strong> : coordination, entraide, communication</li>
-            <li><strong>Autonomie</strong> : je cherche, je teste, je reviens avec une solution</li>
-            <li><strong>Service</strong> : je pense “utilisateur / client” et résultat</li>
-          </ul>
-          <p class="about-note">
-            Plusieurs de ces qualités sont explicitement présentes sur tes CV (accueil, communication, autonomie, adaptation, gestion du temps).
-            :contentReference[oaicite:15]{index=15}
-          </p>
-        </div>
-
-        <div class="about-card">
-          <h3>Centres d’intérêt (et ce que ça dit de moi)</h3>
-          <p>
-            Échecs (logique/stratégie), lecture (curiosité), sport (discipline), scoutisme (engagement).
-            :contentReference[oaicite:16]{index=16} :contentReference[oaicite:17]{index=17}
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="section">
-    <div class="container">
-      <h2>Si tu recherches quelqu’un de fiable et impliqué</h2>
-      <p>
-        Que ce soit pour un projet web / logiciel, ou une mission plus “terrain”, je suis à l’aise dans les environnements qui demandent
-        du sérieux, de la rigueur, et une vraie implication.
+      <h2>Compétences</h2>
+      <p class="section-intro">
+        Base technique + soft skills opérationnels : je suis efficace dans une équipe, et fiable dans l’exécution.
       </p>
-      <div class="about-actions">
-        <a class="btn" href="/contact.php">Me contacter</a>
+
+      <div class="grid skills-grid">
+        <div class="card">
+          <h3>Développement</h3>
+          <p>PHP, SQL, Java, JavaScript, HTML/CSS, Android, Arduino (selon tes CV).</p>
+        </div>
+
+        <div class="card">
+          <h3>Automatisation / SI</h3>
+          <p>PowerShell, configurations, logique serveurs, support et ticketing.</p>
+        </div>
+
+        <div class="card">
+          <h3>Soft skills</h3>
+          <p>Esprit d’équipe, autonomie, adaptation, gestion du temps, communication, accueil & relation client.</p>
+        </div>
+
+        <div class="card">
+          <h3>Centres d’intérêt</h3>
+          <p>Échecs (logique), lecture, jeux vidéo, natation, musculation, scoutisme.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="section section-alt">
+    <div class="container">
+      <h2>Travaillons ensemble</h2>
+      <p class="section-intro">
+        Si tu recherches quelqu’un de sérieux, impliqué et fiable — capable de tenir le rythme, de communiquer clairement,
+        et de livrer — je suis disponible pour en discuter.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/contact.php">Me contacter</a>
+        <a class="btn btn-outline" href="/tarifs.php">Voir mes tarifs</a>
         <a class="btn btn-outline" href="/projects.php">Voir mes projets</a>
       </div>
     </div>
