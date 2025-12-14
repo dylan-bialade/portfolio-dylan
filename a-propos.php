@@ -1,179 +1,209 @@
 <?php
-// a-propos.php
-// Ajuste simplement les chemins si tes includes ne sont pas dans /includes
+$currentPage = 'about';
 $pageTitle = "À propos";
-$pageDescription = "Présentation de Dylan Bialade : parcours, compétences, méthode de travail et objectifs en développement.";
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title><?= htmlspecialchars($pageTitle) ?></title>
-  <meta name="description" content="<?= htmlspecialchars($pageDescription) ?>" />
+<?php require __DIR__ . '/partials/header.php'; ?>
 
-  <!-- Si tu as déjà un CSS global, laisse-le -->
-  <link rel="stylesheet" href="/assets/css/style.css" />
-  <!-- CSS spécifique à la page -->
-  <link rel="stylesheet" href="/assets/css/about.css" />
-</head>
+<main class="main about">
 
-<body>
+  <!-- INTRO / POSITIONNEMENT -->
+  <section class="section">
+    <div class="container">
+      <h1>À propos</h1>
 
-<?php
-// Si tu as un header commun :
-if (file_exists(__DIR__ . "/includes/header.php")) {
-  require __DIR__ . "/includes/header.php";
-}
-?>
+      <p class="about-lead">
+        Je suis <strong>Dylan Bialade</strong>, étudiant en <strong>développement</strong> (BTS SIO option SLAM) avec une
+        vraie culture du <strong>terrain</strong>. Ce qui me caractérise le plus : je suis <strong>sérieux</strong>,
+        <strong>impliqué</strong>, et je m’investis pleinement dans chaque poste que j’occupe — que ce soit en dev, en support,
+        en vente, en animation ou en restauration.
+      </p>
 
-<main class="about">
-  <section class="about__hero">
-    <div class="about__container about__heroGrid">
-      <div>
-        <p class="about__kicker">Développement • Web/API • Automatisation • Mobile/Embarqué</p>
-        <h1 class="about__title">Dylan Bialade</h1>
-        <p class="about__lead">
-          Étudiant en informatique (BTS SIO SLAM), je conçois des solutions pragmatiques et maintenables :
-          développement web / API, scripts d’automatisation, et projets Android / Arduino.
-        </p>
-
-        <div class="about__actions">
-          <a class="about__btn about__btn--primary" href="/contact.php">Me contacter</a>
-          <a class="about__btn" href="https://github.com/dylan-bialade" target="_blank" rel="noopener">GitHub</a>
-        </div>
-
-        <ul class="about__chips" aria-label="Points clés">
-          <li>Polyvalence (web, scripts, mobile)</li>
-          <li>Approche qualité & sécurité</li>
-          <li>Support / diagnostic terrain</li>
-          <li>Esprit logique, transmission</li>
-        </ul>
+      <div class="about-badges">
+        <span class="about-badge">Fiabilité / régularité</span>
+        <span class="about-badge">Sens du service</span>
+        <span class="about-badge">Travail d’équipe</span>
+        <span class="about-badge">Autonomie</span>
+        <span class="about-badge">Résolution de problèmes</span>
       </div>
 
-      <aside class="about__card">
-        <h2 class="about__cardTitle">En bref</h2>
-        <dl class="about__facts">
-          <div><dt>Profil</dt><dd>Développement & solutions techniques</dd></div>
-          <div><dt>Stack</dt><dd>PHP, SQL, Java, Android, JavaScript, PowerShell</dd></div>
-          <div><dt>Atouts</dt><dd>Autonomie, adaptation, rigueur</dd></div>
-          <div><dt>Objectif</dt><dd>Projets concrets, montée en compétences</dd></div>
-        </dl>
+      <div class="about-actions">
+        <a class="btn" href="/projects.php">Voir mes projets</a>
+        <a class="btn btn-outline" href="/contact.php">Me contacter</a>
+        <a class="btn btn-ghost" href="https://github.com/dylan-bialade" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </section>
 
-        <div class="about__cv">
-          <!-- Optionnel : si tu mets ton CV en ligne -->
-          <!-- <a class="about__btn about__btn--ghost" href="/assets/docs/cv-dylan-bialade.pdf" target="_blank" rel="noopener">Télécharger mon CV</a> -->
-          <p class="about__hint">
-            Astuce : ajoute une version PDF dans <code>/assets/docs/</code> pour un lien “Télécharger mon CV”.
+  <!-- SERIEUX / IMPLICATION (LA PARTIE QUE TU VEUX VRAIMENT METTRE EN AVANT) -->
+  <section class="section">
+    <div class="container">
+      <h2>Mon sérieux, ce n’est pas une phrase : c’est un historique</h2>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <h3>Entreprise familiale : constance et sens des responsabilités</h3>
+          <p>
+            J’ai travaillé dans l’entreprise familiale (Les Serres du Jansau) sur la durée, avec des missions concrètes :
+            <strong>conseil client</strong>, <strong>vente</strong>, <strong>encaissement</strong>, tenue et organisation.
+            C’est une expérience qui m’a appris à être fiable, à m’impliquer, et à “faire tourner” une activité au quotidien.
+            :contentReference[oaicite:4]{index=4}
+          </p>
+          <ul class="about-list">
+            <li><strong>Relation client</strong> : écoute, compréhension du besoin, conseil</li>
+            <li><strong>Rigueur</strong> : caisse, procédures, qualité de service</li>
+            <li><strong>Implication</strong> : on ne “bâcle” pas quand l’activité dépend de toi</li>
+          </ul>
+          <p class="about-note">
+            Tu m’as indiqué que tu y travailles <strong>depuis tes 14 ans</strong> : je peux l’afficher tel quel sur le site (c’est très valorisant),
+            ou le formuler plus neutre (“depuis l’adolescence”) si tu préfères.
           </p>
         </div>
-      </aside>
+
+        <div class="about-card">
+          <h3>Restauration : discipline, rythme, esprit d’équipe</h3>
+          <p>
+            Mon CDI d’équipier polyvalent chez McDonald’s m’a renforcé sur le <strong>rythme</strong>, la <strong>discipline</strong>,
+            le <strong>respect des protocoles</strong> et la <strong>gestion du stress</strong> — des qualités directement utiles en entreprise.
+            :contentReference[oaicite:5]{index=5}
+          </p>
+          <ul class="about-list">
+            <li>Travail d’équipe, réactivité, fiabilité</li>
+            <li>Gestion du temps, procédures, qualité</li>
+            <li>Tenir un niveau constant, même en rush</li>
+          </ul>
+        </div>
+
+        <div class="about-card">
+          <h3>Animation : pédagogie, responsabilité, confiance</h3>
+          <p>
+            L’animation (contrats d’engagement à l’éducation) m’a appris la <strong>responsabilité</strong>, la <strong>pédagogie</strong>
+            et la gestion de groupe (jeunes 6–14 ans). Ça prouve ma capacité à prendre en charge, organiser et communiquer clairement.
+            :contentReference[oaicite:6]{index=6}
+          </p>
+          <ul class="about-list">
+            <li>Gestion de groupe, sécurité, organisation</li>
+            <li>Communication claire, posture responsable</li>
+            <li>Transmission (utile en équipe dev aussi)</li>
+          </ul>
+        </div>
+
+        <div class="about-card">
+          <h3>Support / SI : diagnostic et sens du service</h3>
+          <p>
+            En environnement SI (Quincaillerie Angles), j’ai fait de la <strong>gestion d’incidents</strong> et du dépannage, avec logique
+            service et outils de ticketing selon CV. Ça développe un vrai réflexe : comprendre vite, résoudre, et expliquer.
+            :contentReference[oaicite:7]{index=7} :contentReference[oaicite:8]{index=8}
+          </p>
+          <ul class="about-list">
+            <li>Analyse rapide, priorisation, résolution</li>
+            <li>Communication avec utilisateurs / équipes</li>
+            <li>Pragmatisme : résultat et continuité de service</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="about__section">
-    <div class="about__container">
-      <h2>Profil professionnel</h2>
+  <!-- EXPERIENCES TECH (EN MODE “PREUVES”) -->
+  <section class="section">
+    <div class="container">
+      <h2>Expériences techniques</h2>
+
+      <div class="about-timeline">
+        <div class="about-timeline-item">
+          <div class="about-timeline-tag">Web / Scripts</div>
+          <h3>Ocsalis — scripts PowerShell & web/API (OVH)</h3>
+          <p>
+            Développement de scripts PowerShell de configuration serveurs + développement d’une solution web/API pour la gestion de serveurs OVH.
+            :contentReference[oaicite:9]{index=9}
+          </p>
+        </div>
+
+        <div class="about-timeline-item">
+          <div class="about-timeline-tag">Arduino / Android</div>
+          <h3>EURL Les Serres du Jansau — solution d’analyse arrosage & appli Android</h3>
+          <p>
+            Développement d’une solution technique d’analyse de l’arrosage + application Android (gestion de comptes / fidélisation, logique RGPD selon CV).
+            :contentReference[oaicite:10]{index=10}
+          </p>
+        </div>
+
+        <div class="about-timeline-item">
+          <div class="about-timeline-tag">Électronique</div>
+          <h3>EDS Électronique — réparation & maintenance</h3>
+          <p>
+            Réparation de matériel multimédia / approche technique terrain.
+            :contentReference[oaicite:11]{index=11}
+          </p>
+        </div>
+
+        <div class="about-timeline-item">
+          <div class="about-timeline-tag">Structure / environnement pro</div>
+          <h3>Chambre des Métiers et de l’Artisanat — expérience en structure</h3>
+          <p>
+            Expérience mentionnée sur tes CV (Onet-le-Château).
+            :contentReference[oaicite:12]{index=12}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPETENCES + PROFIL -->
+  <section class="section">
+    <div class="container">
+      <h2>Compétences & posture professionnelle</h2>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <h3>Technos / domaines</h3>
+          <p>
+            PHP, SQL, Java, JavaScript, HTML/CSS, PowerShell, Arduino, Android (selon CV).
+            :contentReference[oaicite:13]{index=13} :contentReference[oaicite:14]{index=14}
+          </p>
+        </div>
+
+        <div class="about-card">
+          <h3>Soft skills (ce qui me rend efficace)</h3>
+          <ul class="about-list">
+            <li><strong>Sérieux & implication</strong> : je prends les choses à cœur</li>
+            <li><strong>Fiabilité</strong> : ponctualité, constance, respect des consignes</li>
+            <li><strong>Esprit d’équipe</strong> : coordination, entraide, communication</li>
+            <li><strong>Autonomie</strong> : je cherche, je teste, je reviens avec une solution</li>
+            <li><strong>Service</strong> : je pense “utilisateur / client” et résultat</li>
+          </ul>
+          <p class="about-note">
+            Plusieurs de ces qualités sont explicitement présentes sur tes CV (accueil, communication, autonomie, adaptation, gestion du temps).
+            :contentReference[oaicite:15]{index=15}
+          </p>
+        </div>
+
+        <div class="about-card">
+          <h3>Centres d’intérêt (et ce que ça dit de moi)</h3>
+          <p>
+            Échecs (logique/stratégie), lecture (curiosité), sport (discipline), scoutisme (engagement).
+            :contentReference[oaicite:16]{index=16} :contentReference[oaicite:17]{index=17}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="container">
+      <h2>Si tu recherches quelqu’un de fiable et impliqué</h2>
       <p>
-        Mon parcours combine une base “terrain” (dépannage, ticketing, accompagnement utilisateurs) et une montée en puissance en
-        développement (web/API, Android, automatisation). J’accorde une forte importance à la compréhension du besoin, à la qualité
-        du code et à la maintenabilité.
+        Que ce soit pour un projet web / logiciel, ou une mission plus “terrain”, je suis à l’aise dans les environnements qui demandent
+        du sérieux, de la rigueur, et une vraie implication.
       </p>
-      <p>
-        Je cherche à livrer des solutions robustes et claires, avec une logique d’amélioration continue : comprendre le contexte,
-        structurer, implémenter proprement, documenter l’essentiel.
-      </p>
-    </div>
-  </section>
-
-  <section class="about__section about__section--alt">
-    <div class="about__container">
-      <h2>Ce que je peux apporter</h2>
-      <div class="about__grid3">
-        <article class="about__miniCard">
-          <h3>Développement</h3>
-          <p>Web / API, logique métier, intégrations. Priorité : lisibilité, structure et évolution du projet.</p>
-        </article>
-        <article class="about__miniCard">
-          <h3>Automatisation</h3>
-          <p>Scripts PowerShell et outillage : fiabiliser, accélérer, standardiser des tâches techniques.</p>
-        </article>
-        <article class="about__miniCard">
-          <h3>Approche “terrain”</h3>
-          <p>Diagnostic, résolution, communication : une culture support utile pour produire des solutions réellement exploitables.</p>
-        </article>
+      <div class="about-actions">
+        <a class="btn" href="/contact.php">Me contacter</a>
+        <a class="btn btn-outline" href="/projects.php">Voir mes projets</a>
       </div>
     </div>
   </section>
 
-  <section class="about__section">
-    <div class="about__container">
-      <h2>Ma méthode</h2>
-      <ol class="about__steps">
-        <li><strong>Cadrage :</strong> besoin, contraintes, critères de réussite.</li>
-        <li><strong>Conception :</strong> structure simple, données propres, choix techniques justifiés.</li>
-        <li><strong>Implémentation :</strong> itérations courtes, contrôles, code lisible.</li>
-        <li><strong>Livraison :</strong> documentation utile, passation, amélioration continue.</li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="about__section about__section--alt">
-    <div class="about__container">
-      <h2>Parcours (sélection)</h2>
-
-      <div class="about__timeline">
-        <div class="about__tItem">
-          <div class="about__tDate">2025</div>
-          <div class="about__tContent">
-            <h3>Arduino & Android</h3>
-            <p>Développement de solutions techniques (embarqué + mobile), avec contraintes et logique RGPD selon les cas.</p>
-          </div>
-        </div>
-
-        <div class="about__tItem">
-          <div class="about__tDate">2024</div>
-          <div class="about__tContent">
-            <h3>Web / API & PowerShell</h3>
-            <p>Travaux web orientés API et automatisation (scripts de configuration serveur, outillage).</p>
-          </div>
-        </div>
-
-        <div class="about__tItem">
-          <div class="about__tDate">2022</div>
-          <div class="about__tContent">
-            <h3>Support & ticketing</h3>
-            <p>Gestion d’incidents, dépannage, interventions orientées utilisateur et continuité de service.</p>
-          </div>
-        </div>
-      </div>
-
-      <p class="about__note">
-        Je détaille les projets (stack, objectifs, captures) dans la page “Projets”.
-      </p>
-    </div>
-  </section>
-
-  <section class="about__section">
-    <div class="about__container about__cta">
-      <div>
-        <h2>Travaillons ensemble</h2>
-        <p>Si tu cherches un profil polyvalent et sérieux pour un projet web/app/outillage, je suis disponible pour en discuter.</p>
-      </div>
-      <div class="about__ctaActions">
-        <a class="about__btn about__btn--primary" href="/contact.php">Contact</a>
-        <a class="about__btn" href="/projets.php">Projets</a>
-      </div>
-    </div>
-  </section>
 </main>
 
-<?php
-// Footer commun si présent
-if (file_exists(__DIR__ . "/includes/footer.php")) {
-  require __DIR__ . "/includes/footer.php";
-}
-?>
-
-</body>
-</html>
+<?php require __DIR__ . '/partials/footer.php'; ?>
