@@ -44,12 +44,10 @@ function ensure_stream_key(PDO $pdo, array $u): string {
     return $key;
 }
 
-$action = $_GET['action'] ?? 'status';
-
-$u = current_user($pdo);
+$action = $_GET['action'] ?? '';
 
 if ($action === 'status') {
-    if (!$u) {
+    if (empty($_SESSION['user_id'])) {
         json_out([
             'loggedIn' => false,
             'canStream' => false,
@@ -59,6 +57,9 @@ if ($action === 'status') {
             'label' => null
         ]);
     }
+
+    $u = current_user($pdo);
+    if (!$u) json_out(['error' => 'user_not_found'], 401);
 
     $key = ensure_stream_key($pdo, $u);
 
@@ -81,29 +82,29 @@ if ($action === 'status') {
     ]);
 }
 
-if (!$u) {
-    json_out(['error' => 'not_authenticated'], 401);
-}
-
-$key = ensure_stream_key($pdo, $u);
-$canStream = (int)($u['can_stream_live'] ?? 0) === 1;
-$canView   = (int)($u['can_view_live'] ?? 0) === 1;
+$u = current_user($pdo);
+$canStream = $u && (int)($u['can_stream_live'] ?? 0) === 1;
+$canView   = $u && (int)($u['can_view_live'] ?? 0) === 1;
 
 if ($action === 'enable') {
     if (!$canStream) json_out(['error' => 'no_permission'], 403);
+
+    $key = ensure_stream_key($pdo, $u);
 
     $label = trim((string)($_POST['label'] ?? ''));
     if ($label === '') {
         $label = ($u['pseudo'] ?? 'User') . ' (' . $key . ')';
     }
-    if (mb_strlen($label) > 64) $label = mb_substr($label, 0, 64);
+    if (mb_strlen($label) > 64) {
+        $label = mb_substr($label, 0, 64);
+    }
 
     $stmt = $pdo->prepare('UPDATE users SET live_autostream = 1, live_label = :label, live_last_seen = NOW() WHERE id = :id');
     $stmt->execute([':label' => $label, ':id' => $u['id']]);
 
     $_SESSION['live_autostream'] = 1;
-    $_SESSION['live_label'] = $label;
     $_SESSION['live_stream_key'] = $key;
+    $_SESSION['live_label'] = $label;
 
     json_out(['ok' => true, 'streamKey' => $key, 'label' => $label]);
 }
@@ -127,16 +128,15 @@ if ($action === 'list_streams') {
     if (!$canView) json_out(['error' => 'no_permission'], 403);
 
     // Online = autostream ON + heartbeat récent (30s)
-    $stmt = $pdo->query("""
-        SELECT id, pseudo, live_stream_key, live_label, live_last_seen
-        FROM users
-        WHERE can_stream_live = 1
-          AND live_autostream = 1
-          AND live_last_seen IS NOT NULL
-          AND live_last_seen > (NOW() - INTERVAL 30 SECOND)
-        ORDER BY live_last_seen DESC
-        LIMIT 50
-    """);
+    $sql = "SELECT id, pseudo, live_stream_key, live_label, live_last_seen
+FROM users
+WHERE can_stream_live = 1
+AND live_autostream = 1
+AND live_last_seen IS NOT NULL
+AND live_last_seen > (NOW() - INTERVAL 30 SECOND)
+ORDER BY live_last_seen DESC
+LIMIT 50";
+    $stmt = $pdo->query($sql);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $streams = array_map(function($r) {
