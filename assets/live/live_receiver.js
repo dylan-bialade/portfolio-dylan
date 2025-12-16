@@ -100,7 +100,7 @@ function makePeer() {
       fromRole: "viewer",
       direction: "viewer_to_sender",
       msgType: "ice",
-      payload: ev.candidate,
+      payload: { candidate: ev.candidate }, // IMPORTANT: wrapper attendu par le sender
       viewerId
     });
   };
@@ -123,16 +123,22 @@ async function poll() {
   if (res.ok && Array.isArray(res.messages)) {
     for (const m of res.messages) {
       sinceId = Math.max(sinceId, m.id || 0);
+      const t = m.msgType || m.msg_type;
 
-      if (m.msgType === "answer" || m.msg_type === "answer") {
-        await pc.setRemoteDescription(m.payload);
-        setWatchStatus("Lecture en cours.");
-      } else if (m.msgType === "ice" || m.msg_type === "ice") {
-        try { await pc.addIceCandidate(m.payload); } catch {}
+      if (t === "answer") {
+        const answer = m?.payload?.answer;   // IMPORTANT: wrapper attendu
+        if (answer) {
+          await pc.setRemoteDescription(answer);
+          setWatchStatus("Lecture en cours.");
+        }
+      } else if (t === "ice") {
+        const cand = m?.payload?.candidate;  // IMPORTANT: wrapper attendu
+        if (cand) {
+          try { await pc.addIceCandidate(cand); } catch {}
+        }
       }
     }
   } else if (res.error) {
-    // Utile pour diagnostiquer côté OVH
     console.warn("poll error:", res);
   }
 
@@ -162,7 +168,7 @@ async function watch(r) {
       fromRole: "viewer",
       direction: "viewer_to_sender",
       msgType: "offer",
-      payload: offer,
+      payload: { offer }, // IMPORTANT: wrapper attendu par le sender
       viewerId
     });
 
@@ -174,7 +180,7 @@ async function watch(r) {
     }
 
     setWatchStatus("Offer envoyé, attente answer...");
-    btnLeave && (btnLeave.disabled = false);
+    if (btnLeave) btnLeave.disabled = false;
 
     poll();
   } catch (e) {
@@ -194,11 +200,11 @@ async function leave() {
     pc = null;
   }
   if (videoEl) videoEl.srcObject = null;
-  btnLeave && (btnLeave.disabled = true);
+  if (btnLeave) btnLeave.disabled = true;
   setWatchStatus("Déconnecté.");
 }
 
-btnRefresh && btnRefresh.addEventListener("click", refreshStreams);
-btnLeave && btnLeave.addEventListener("click", leave);
+if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
+if (btnLeave) btnLeave.addEventListener("click", leave);
 
 refreshStreams();
