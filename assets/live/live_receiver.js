@@ -1,5 +1,5 @@
 // assets/live/live_receiver.js
-// Receiver — UI inchangée, audio via WebAudio (plus fiable que <video> seul)
+// Receiver (UI inchangée) + FIX SON (Audio unlock + audio element caché)
 
 const CFG = window.__LIVE_CONFIG__ || {
   apiUrl: "/live_api.php",
@@ -21,75 +21,54 @@ let viewerId = null;
 let sinceId = 0;
 let running = false;
 
-// WebAudio
+// --- Audio unlock (fiable) ---
 let audioCtx = null;
-let audioSourceNode = null;
+let audioEl = null;
 
-function setStatus(text) { if (statusEl) statusEl.textContent = text; }
-function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text; }
+function setStatus(text) { if (statusEl) statusEl.textContent = text || ""; }
+function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text || ""; }
 
-async function apiGet(action) {
-  const r = await fetch(`${CFG.apiUrl}?action=${encodeURIComponent(action)}`, { credentials: "same-origin" });
-  return r.json();
+async function api(action) {
+  const url = new URL(CFG.apiUrl, window.location.origin);
+  url.searchParams.set("action", action);
+  const res = await fetch(url.toString(), { credentials: "same-origin" });
+  return res.json();
 }
 
-async function signalPost(body) {
-  const r = await fetch(CFG.signalUrl, {
+async function signalSend({ room, msgType, payload }) {
+  const res = await fetch(`${CFG.signalUrl}?action=send`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
-    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      room,
+      fromRole: "viewer",
+      direction: "to_sender",
+      msgType,
+      payload,
+      viewerId
+    })
   });
-  return r.json();
+  return res.json();
 }
 
-// Débloque l’audio (doit être appelé suite à un geste utilisateur, ici le clic "Regarder")
-async function unlockAudio() {
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state !== "running") {
-      await audioCtx.resume();
-    }
-  } catch (e) {
-    console.warn("[Receiver] unlockAudio failed:", e);
-  }
+async function signalReceive(timeout = 15000) {
+  const url = new URL(CFG.signalUrl, window.location.origin);
+  url.searchParams.set("action", "receive");
+  url.searchParams.set("room", room);
+  url.searchParams.set("role", "viewer");
+  url.searchParams.set("viewerId", viewerId);
+  url.searchParams.set("since_id", String(sinceId));
+  url.searchParams.set("timeout", String(timeout));
+  const res = await fetch(url.toString(), { credentials: "same-origin" });
+  return res.json();
 }
 
-function detachWebAudio() {
-  try { audioSourceNode?.disconnect(); } catch {}
-  audioSourceNode = null;
-}
-
-function attachWebAudio(stream) {
-  if (!audioCtx) return; // pas débloqué => rien
-  detachWebAudio();
-
-  try {
-    // Utilise l’audio du stream (si présent) via WebAudio
-    audioSourceNode = audioCtx.createMediaStreamSource(stream);
-    audioSourceNode.connect(audioCtx.destination);
-  } catch (e) {
-    console.warn("[Receiver] attachWebAudio failed:", e);
-  }
-}
-
-async function refreshStreams() {
-  setStatus("Chargement des flux...");
-  const res = await apiGet("list_streams");
-  if (!res.ok) {
-    setStatus(res.error ? `Erreur: ${res.error}` : "Erreur list_streams");
-    return;
-  }
-  renderList(res.streams || []);
-  setStatus(`Flux en ligne: ${(res.streams || []).length}`);
-}
-
-function renderList(streams) {
+function renderStreams(streams) {
   if (!listEl) return;
-  if (!streams.length) {
-    listEl.innerHTML = `<div class="live-stream-item">Aucun flux en ligne.</div>`;
+
+  if (!streams || !streams.length) {
+    listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne (heartbeat &lt; 30s).</div>`;
     return;
   }
 
@@ -102,10 +81,7 @@ function renderList(streams) {
   `).join("");
 
   listEl.querySelectorAll("button[data-room]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const r = btn.getAttribute("data-room");
-      if (r) watch(r);
-    });
+    btn.addEventListener("click", () => watch(btn.dataset.room));
   });
 }
 
@@ -119,6 +95,58 @@ function escapeHtml(s) {
   }[c]));
 }
 
+function ensureAudioElements() {
+  if (!audioEl) {
+    audioEl = document.createElement("audio");
+    audioEl.autoplay = true;
+    audioEl.playsInline = true;
+    audioEl.muted = false;
+    audioEl.volume = 1;
+    audioEl.style.display = "none";
+    document.body.appendChild(audioEl);
+  }
+}
+
+async function unlockAudioOnUserGesture() {
+  // 1) WebAudio unlock (très fiable)
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state !== "running") await audioCtx.resume();
+
+    // petit “beep” silencieux (buffer vide) pour finaliser l’unlock sur certains mobiles
+    const buffer = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(audioCtx.destination);
+    src.start(0);
+  } catch {}
+
+  // 2) audio tag unlock
+  try {
+    ensureAudioElements();
+    await audioEl.play();
+  } catch {}
+}
+
+function attachAudioStream(stream) {
+  try {
+    ensureAudioElements();
+    const tracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
+    if (!tracks || tracks.length === 0) {
+      // debug simple dans ton UI existante
+      setWatchStatus("Lecture en cours (AUDIO: aucune piste reçue).");
+      return;
+    }
+    const audioOnly = new MediaStream(tracks);
+    audioEl.srcObject = audioOnly;
+    audioEl.muted = false;
+    audioEl.volume = 1;
+    audioEl.play().catch(() => {});
+  } catch (e) {
+    console.warn("[Receiver] attachAudioStream error", e);
+  }
+}
+
 function makePeer() {
   const peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -126,144 +154,144 @@ function makePeer() {
 
   peer.ontrack = (ev) => {
     const stream = ev.streams[0];
-    if (!stream || !videoEl) return;
+    if (!stream) return;
 
-    // Debug utile (tu peux le laisser)
-    try {
-      console.log("[Receiver] audioTracks:", stream.getAudioTracks().length, "videoTracks:", stream.getVideoTracks().length);
-    } catch {}
-
-    // Vidéo (UI inchangée)
-    videoEl.srcObject = stream;
-    videoEl.muted = false;
-    videoEl.volume = 1;
-    videoEl.play().catch(() => { /* autoplay peut bloquer la partie <video> */ });
-
-    // Audio via WebAudio (si unlockAudio() a été fait au clic)
-    if (stream.getAudioTracks && stream.getAudioTracks().length > 0) {
-      attachWebAudio(stream);
+    // Vidéo (UI identique)
+    if (videoEl) {
+      videoEl.srcObject = stream;
+      videoEl.muted = false;
+      videoEl.volume = 1;
+      videoEl.play().catch(() => {});
     }
+
+    // Audio (sortie via <audio> caché)
+    attachAudioStream(stream);
   };
 
   peer.onicecandidate = async (ev) => {
-    if (!ev.candidate || !room) return;
-    await signalPost({
-      action: "send",
-      room,
-      fromRole: "viewer",
-      direction: "viewer_to_sender",
-      msgType: "ice",
-      payload: { candidate: ev.candidate },
-      viewerId
-    });
+    if (!ev.candidate) return;
+    await signalSend({ room, msgType: "ice", payload: { candidate: ev.candidate } });
   };
 
   return peer;
 }
 
-async function poll() {
-  if (!running || !room) return;
+async function watch(roomKey) {
+  await leave();
 
-  const res = await signalPost({
-    action: "receive",
-    role: "viewer",
-    room,
-    viewerId,
-    sinceId,
-    timeout: 15000
-  });
+  // IMPORTANT: le clic “Regarder” est un geste utilisateur -> unlock audio ici
+  await unlockAudioOnUserGesture();
 
-  if (res.ok && Array.isArray(res.messages)) {
-    for (const m of res.messages) {
-      sinceId = Math.max(sinceId, m.id || 0);
-      const t = m.msgType || m.msg_type;
+  room = roomKey;
+  viewerId = (crypto?.randomUUID ? crypto.randomUUID() : ("v-" + Math.random().toString(16).slice(2)));
+  sinceId = 0;
 
-      if (t === "answer") {
-        const answer = m?.payload?.answer;
-        if (answer) {
-          await pc.setRemoteDescription(answer);
-          setWatchStatus("Lecture en cours.");
-        }
-      } else if (t === "ice") {
-        const cand = m?.payload?.candidate;
-        if (cand) {
-          try { await pc.addIceCandidate(cand); } catch {}
-        }
-      }
-    }
+  pc = makePeer();
+  running = true;
+
+  // IMPORTANT: transceivers pour forcer réception audio/vidéo (fiable sur versions récentes)
+  try {
+    pc.addTransceiver("audio", { direction: "recvonly" });
+    pc.addTransceiver("video", { direction: "recvonly" });
+  } catch {}
+
+  setWatchStatus(`Connexion au flux ${room}…`);
+  if (btnLeave) btnLeave.disabled = false;
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  const sent = await signalSend({ room, msgType: "offer", payload: { offer } });
+  if (!sent || sent.ok !== true) {
+    setWatchStatus("Impossible d'envoyer l'offre (signalisation).");
+    running = false;
+    return;
   }
 
-  setTimeout(poll, 800);
+  pollLoop().catch((e) => {
+    console.error(e);
+    setWatchStatus("Erreur (poll).");
+  });
 }
 
-async function watch(r) {
-  try {
-    await leave();
+async function handleAnswer(msg) {
+  const answer = msg?.payload?.answer;
+  if (!answer) return;
+  await pc.setRemoteDescription(answer);
 
-    // IMPORTANT: geste utilisateur => débloque WebAudio ici
-    await unlockAudio();
+  // retente audio play après answer
+  try { audioEl?.play?.(); } catch {}
 
-    room = String(r);
-    viewerId = "v_" + Math.random().toString(16).slice(2);
-    sinceId = 0;
-    running = true;
+  setWatchStatus("Lecture en cours.");
+}
 
-    setWatchStatus(`Connexion au flux ${room}...`);
-    if (btnLeave) btnLeave.disabled = false;
+async function handleIce(msg) {
+  const c = msg?.payload?.candidate;
+  if (!c) return;
+  try { await pc.addIceCandidate(c); } catch {}
+}
 
-    pc = makePeer();
+async function pollLoop() {
+  while (running) {
+    const res = await signalReceive(15000);
 
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-    await pc.setLocalDescription(offer);
+    if (!running) return;
 
-    const sendRes = await signalPost({
-      action: "send",
-      room,
-      fromRole: "viewer",
-      direction: "viewer_to_sender",
-      msgType: "offer",
-      payload: { offer },
-      viewerId
-    });
-
-    if (!sendRes.ok) {
-      setWatchStatus(`Erreur offer: ${sendRes.error || "unknown"}`);
-      running = false;
-      return;
+    if (!res || res.ok !== true) {
+      setWatchStatus("Signalisation indisponible.");
+      await new Promise(r => setTimeout(r, 1200));
+      continue;
     }
 
-    setWatchStatus("Offer envoyé, attente answer...");
-    poll();
-  } catch (e) {
-    console.error(e);
-    setWatchStatus("Erreur lors de la lecture (voir console).");
+    sinceId = res.lastId || sinceId;
+    const msgs = res.messages || [];
+
+    for (const m of msgs) {
+      if (m.msgType === "answer") await handleAnswer(m);
+      if (m.msgType === "ice") await handleIce(m);
+    }
   }
 }
 
 async function leave() {
   running = false;
-  room = null;
-  viewerId = null;
   sinceId = 0;
+  viewerId = null;
+  room = null;
 
-  if (pc) {
-    try { pc.close(); } catch {}
-    pc = null;
-  }
+  try { pc?.close(); } catch {}
+  pc = null;
 
-  detachWebAudio();
+  if (videoEl) videoEl.srcObject = null;
 
-  if (videoEl) {
-    videoEl.srcObject = null;
-    videoEl.muted = false;
-    videoEl.volume = 1;
-  }
+  // stop audio output
+  try { if (audioEl) audioEl.srcObject = null; } catch {}
 
   if (btnLeave) btnLeave.disabled = true;
-  setWatchStatus("Déconnecté.");
+  setWatchStatus("");
 }
 
-if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
-if (btnLeave) btnLeave.addEventListener("click", leave);
+async function refreshStreams() {
+  setStatus("Chargement…");
+  const res = await api("list_streams");
+  if (!res || res.ok !== true) {
+    setStatus("Impossible de charger la liste.");
+    renderStreams([]);
+    return;
+  }
+  setStatus(`${res.streams.length} flux en ligne`);
+  renderStreams(res.streams);
+}
 
-refreshStreams();
+document.addEventListener("DOMContentLoaded", () => {
+  if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
+  if (btnLeave) btnLeave.addEventListener("click", leave);
+
+  refreshStreams().catch((e) => {
+    console.error(e);
+    setStatus("Erreur.");
+  });
+
+  // refresh léger toutes les 5 secondes
+  setInterval(() => refreshStreams().catch(() => {}), 5000);
+});
