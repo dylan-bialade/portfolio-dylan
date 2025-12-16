@@ -1,20 +1,25 @@
 // assets/live/live_receiver.js
-// Robust click handling + audio unlock + debug
+// Receiver (page réservée aux comptes autorisés) — FIX: bouton Regarder + audio
 
 (function () {
-  const CFG = window.__LIVE_CONFIG__ || { apiUrl: "/live_api.php", signalUrl: "/live_signal.php" };
+  const CFG = window.__LIVE_CONFIG__ || {
+    apiUrl: "/live_api.php",
+    signalUrl: "/live_signal.php",
+  };
 
-  const statusEl = document.getElementById("streamsStatus");
-  const watchStatusEl = document.getElementById("watchStatus");
-  const btnRefresh = document.getElementById("btnRefreshStreams");
-  const btnLeave = document.getElementById("btnLeave");
-  const videoEl = document.getElementById("receiverVideo");
-  const listEl = document.getElementById("streamsList"); // optionnel
+  function $(id) { return document.getElementById(id); }
 
-  function setStatus(t) { if (statusEl) statusEl.textContent = t || ""; }
-  function setWatchStatus(t) { if (watchStatusEl) watchStatusEl.textContent = t || ""; }
+  const listEl = $("streamsList");
+  const statusEl = $("streamsStatus");
+  const watchStatusEl = $("watchStatus");
+  const btnRefresh = $("btnRefreshStreams");
+  const btnLeave = $("btnLeave");
+  const videoEl = $("receiverVideo");
 
-  console.log("[LiveReceiver] JS chargé OK", { apiUrl: CFG.apiUrl, signalUrl: CFG.signalUrl });
+  function setStatus(text) { if (statusEl) statusEl.textContent = text || ""; }
+  function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text || ""; }
+
+  console.log("[LiveReceiver] loaded", CFG);
 
   let pc = null;
   let room = null;
@@ -22,7 +27,7 @@
   let sinceId = 0;
   let running = false;
 
-  // Audio unlock (WebAudio + <audio> caché)
+  // ---- Audio unlock (sans UI) ----
   let audioCtx = null;
   let audioEl = null;
 
@@ -38,62 +43,92 @@
     }
   }
 
-  async function unlockAudio() {
+  async function unlockAudioOnGesture() {
+    // Appelé depuis le clic "Regarder"
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state !== "running") await audioCtx.resume();
 
+      // tick (certains mobiles aiment bien)
       const buffer = audioCtx.createBuffer(1, 1, 22050);
       const src = audioCtx.createBufferSource();
       src.buffer = buffer;
       src.connect(audioCtx.destination);
       src.start(0);
     } catch (e) {
-      console.warn("[LiveReceiver] WebAudio unlock failed", e);
+      console.warn("[LiveReceiver] AudioContext unlock failed:", e);
     }
 
     try {
       ensureAudioEl();
       await audioEl.play();
-    } catch (e) {
-      // parfois bloqué, mais le clic “Regarder” suffit généralement à débloquer
+    } catch {
+      // si bloqué, on retentera après answer
     }
   }
 
-  function attachAudio(stream) {
-    try {
-      const aTracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
-      console.log("[LiveReceiver] tracks => audio:", aTracks.length, "video:", stream.getVideoTracks?.().length || 0);
+  function attachAudioFromStream(stream) {
+    ensureAudioEl();
+    const aTracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
+    console.log("[LiveReceiver] tracks audio:", aTracks.length, "video:", (stream.getVideoTracks?.().length || 0));
 
-      if (!aTracks || aTracks.length === 0) {
-        setWatchStatus("Lecture en cours (AUDIO: 0 piste reçue).");
-        return;
-      }
-
-      ensureAudioEl();
-      audioEl.srcObject = new MediaStream(aTracks);
-      audioEl.muted = false;
-      audioEl.volume = 1;
-      audioEl.play().catch(() => {});
-    } catch (e) {
-      console.warn("[LiveReceiver] attachAudio failed", e);
+    if (!aTracks || aTracks.length === 0) {
+      setWatchStatus("Lecture en cours (AUDIO: 0 piste reçue).");
+      return;
     }
+
+    const audioOnly = new MediaStream(aTracks);
+    audioEl.srcObject = audioOnly;
+    audioEl.muted = false;
+    audioEl.volume = 1;
+    audioEl.play().catch(() => {});
   }
 
-  async function apiGet(action) {
-    const url = CFG.apiUrl + "?action=" + encodeURIComponent(action);
-    const r = await fetch(url, { credentials: "same-origin" });
-    return r.json();
+  async function api(action) {
+    const url = new URL(CFG.apiUrl, window.location.origin);
+    url.searchParams.set("action", action);
+    const res = await fetch(url.toString(), { credentials: "same-origin" });
+    return res.json();
   }
 
-  async function signalPost(body) {
-    const r = await fetch(CFG.signalUrl, {
+  async function signalSend({ room, msgType, payload }) {
+    const res = await fetch(`${CFG.signalUrl}?action=send`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        room,
+        fromRole: "viewer",
+        direction: "to_sender",
+        msgType,
+        payload,
+        viewerId
+      })
     });
-    return r.json();
+    return res.json();
+  }
+
+  async function signalReceive(timeout = 15000) {
+    const url = new URL(CFG.signalUrl, window.location.origin);
+    url.searchParams.set("action", "receive");
+    url.searchParams.set("room", room);
+    url.searchParams.set("role", "viewer");
+    url.searchParams.set("viewerId", viewerId);
+    url.searchParams.set("since_id", String(sinceId));
+    url.searchParams.set("timeout", String(timeout));
+    const res = await fetch(url.toString(), { credentials: "same-origin" });
+    return res.json();
+  }
+
+  // FIX ICI : fonction valide (ton fichier avait une erreur """: )
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[c]));
   }
 
   function makePeer() {
@@ -112,66 +147,60 @@
         videoEl.play().catch(() => {});
       }
 
-      attachAudio(stream);
+      attachAudioFromStream(stream);
     };
 
     peer.onicecandidate = async (ev) => {
-      if (!ev.candidate || !room) return;
-      await signalPost({
-        action: "send",
-        room,
-        fromRole: "viewer",
-        direction: "viewer_to_sender",
-        msgType: "ice",
-        payload: { candidate: ev.candidate },
-        viewerId
-      });
+      if (!ev.candidate) return;
+      await signalSend({ room, msgType: "ice", payload: { candidate: ev.candidate } });
     };
 
     return peer;
   }
 
-  async function poll() {
-    if (!running || !room) return;
+  async function handleAnswer(msg) {
+    const answer = msg?.payload?.answer;
+    if (!answer) return;
 
-    const res = await signalPost({
-      action: "receive",
-      role: "viewer",
-      room,
-      viewerId,
-      sinceId,
-      timeout: 15000
-    });
+    await pc.setRemoteDescription(answer);
 
-    if (res && res.ok === true && Array.isArray(res.messages)) {
-      for (const m of res.messages) {
-        sinceId = Math.max(sinceId, m.id || 0);
-        const t = m.msgType || m.msg_type;
+    // retente play audio après answer
+    try { await audioEl?.play?.(); } catch {}
 
-        if (t === "answer") {
-          const answer = m?.payload?.answer;
-          if (answer) {
-            await pc.setRemoteDescription(answer);
-            setWatchStatus("Lecture en cours.");
-            try { audioEl?.play?.(); } catch {}
-          }
-        } else if (t === "ice") {
-          const cand = m?.payload?.candidate;
-          if (cand) {
-            try { await pc.addIceCandidate(cand); } catch {}
-          }
-        }
+    setWatchStatus("Lecture en cours.");
+  }
+
+  async function handleIce(msg) {
+    const c = msg?.payload?.candidate;
+    if (!c) return;
+    try { await pc.addIceCandidate(c); } catch {}
+  }
+
+  async function pollLoop() {
+    while (running) {
+      const res = await signalReceive(15000);
+      if (!running) return;
+
+      if (!res || res.ok !== true) {
+        setWatchStatus("Signalisation indisponible.");
+        await new Promise(r => setTimeout(r, 1200));
+        continue;
+      }
+
+      sinceId = res.lastId || sinceId;
+      const msgs = res.messages || [];
+      for (const m of msgs) {
+        if (m.msgType === "answer") await handleAnswer(m);
+        if (m.msgType === "ice") await handleIce(m);
       }
     }
-
-    setTimeout(poll, 800);
   }
 
   async function leave() {
     running = false;
-    room = null;
-    viewerId = null;
     sinceId = 0;
+    viewerId = null;
+    room = null;
 
     try { pc?.close(); } catch {}
     pc = null;
@@ -180,117 +209,99 @@
     try { if (audioEl) audioEl.srcObject = null; } catch {}
 
     if (btnLeave) btnLeave.disabled = true;
-    setWatchStatus("Déconnecté.");
+    setWatchStatus("");
   }
 
   async function watch(roomKey) {
-    console.log("[LiveReceiver] watch()", roomKey);
+    console.log("[LiveReceiver] watch", roomKey);
+
     await leave();
 
-    // clic utilisateur => unlock audio ici
-    await unlockAudio();
+    // IMPORTANT: clic utilisateur => unlock audio ici
+    await unlockAudioOnGesture();
 
-    room = String(roomKey);
-    viewerId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("v_" + Math.random().toString(16).slice(2));
+    room = roomKey;
+    viewerId = (crypto?.randomUUID ? crypto.randomUUID() : ("v-" + Math.random().toString(16).slice(2)));
     sinceId = 0;
-    running = true;
 
-    if (btnLeave) btnLeave.disabled = false;
-    setWatchStatus("Connexion...");
+    ensureAudioEl();
 
     pc = makePeer();
+    running = true;
 
-    // force réception audio/vidéo (plus stable)
+    // Force réception audio + vidéo (plus fiable)
     try {
       pc.addTransceiver("audio", { direction: "recvonly" });
       pc.addTransceiver("video", { direction: "recvonly" });
     } catch {}
 
+    setWatchStatus(`Connexion au flux ${room}…`);
+    if (btnLeave) btnLeave.disabled = false;
+
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    const sendRes = await signalPost({
-      action: "send",
-      room,
-      fromRole: "viewer",
-      direction: "viewer_to_sender",
-      msgType: "offer",
-      payload: { offer },
-      viewerId
-    });
-
-    if (!sendRes || sendRes.ok !== true) {
-      setWatchStatus("Erreur: impossible d'envoyer l'offre.");
+    const sent = await signalSend({ room, msgType: "offer", payload: { offer } });
+    if (!sent || sent.ok !== true) {
+      setWatchStatus("Impossible d'envoyer l'offre (signalisation).");
       running = false;
       return;
     }
 
     setWatchStatus("Offer envoyée, attente answer...");
-    poll();
+    pollLoop().catch((e) => {
+      console.error(e);
+      setWatchStatus("Erreur (poll).");
+    });
   }
 
-  // Expose pour test manuel dans la console
-  window.liveReceiverWatch = watch;
-  window.liveReceiverLeave = leave;
-
-  // Refresh list (si ton UI repose dessus)
   async function refreshStreams() {
-    const res = await apiGet("list_streams");
+    setStatus("Chargement…");
+    const res = await api("list_streams");
     if (!res || res.ok !== true) {
-      setStatus("Erreur liste");
+      setStatus("Impossible de charger la liste.");
+      if (listEl) listEl.innerHTML = `<div class="live-muted">Erreur.</div>`;
       return;
     }
 
-    const streams = res.streams || [];
-    setStatus(`${streams.length} flux en ligne`);
+    setStatus(`${res.streams.length} flux en ligne`);
 
-    if (!listEl) return; // si ton UI est server-rendered, on ne touche pas
+    if (!listEl) return;
 
-    if (!streams.length) {
-      listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne.</div>`;
+    if (!res.streams.length) {
+      listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne (heartbeat < 30s).</div>`;
       return;
     }
 
-    listEl.innerHTML = streams.map(s => `
+    listEl.innerHTML = res.streams.map(s => `
       <div class="live-stream-item">
-        <div class="title">${String(s.label || s.streamKey)}</div>
-        <div class="meta">Room: <code>${String(s.streamKey || "")}</code></div>
-        <button type="button" data-room="${String(s.streamKey || "")}">Regarder</button>
+        <div class="title">${escapeHtml(s.label || s.streamKey)}</div>
+        <div class="meta">Room: <code>${escapeHtml(s.streamKey || "")}</code></div>
+        <button type="button" data-room="${escapeHtml(s.streamKey || "")}">Regarder</button>
       </div>
     `).join("");
   }
 
-  // Click handler global (ne dépend PAS de #streamsList)
-  document.addEventListener("click", (e) => {
-    const btn = e.target && e.target.closest ? e.target.closest("button") : null;
-    if (!btn) return;
-
-    // 1) bouton avec data-room
-    const r1 = btn.getAttribute("data-room");
-    if (r1) {
+  // Delegation : garantit que "Regarder" marche même après re-render
+  if (listEl) {
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("button[data-room]");
+      if (!btn) return;
       e.preventDefault();
-      e.stopPropagation();
-      watch(r1);
-      return;
-    }
-
-    // 2) bouton dont le texte est "Regarder" (fallback)
-    const label = (btn.textContent || "").trim().toLowerCase();
-    if (label === "regarder") {
-      const card = btn.closest(".live-stream-item") || btn.parentElement;
-      const code = card ? card.querySelector("code") : null;
-      const r2 = code ? (code.textContent || "").trim() : "";
-      if (r2) {
-        e.preventDefault();
-        e.stopPropagation();
-        watch(r2);
-      }
-    }
-  }, true);
+      const r = btn.getAttribute("data-room");
+      if (r) watch(r);
+    });
+  }
 
   if (btnRefresh) btnRefresh.addEventListener("click", (e) => { e.preventDefault(); refreshStreams(); });
   if (btnLeave) btnLeave.addEventListener("click", (e) => { e.preventDefault(); leave(); });
 
+  // Expose debug
+  window.liveReceiverWatch = watch;
+  window.liveReceiverLeave = leave;
+
   // init
-  refreshStreams().catch(() => {});
+  document.addEventListener("DOMContentLoaded", () => {
+    refreshStreams().catch(console.error);
+  });
 })();
