@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate');
 
 function json_out(array $data, int $code = 200): void {
     http_response_code($code);
@@ -18,7 +19,10 @@ function json_out(array $data, int $code = 200): void {
 
 function current_user(PDO $pdo): ?array {
     if (empty($_SESSION['user_id'])) return null;
-    $stmt = $pdo->prepare('SELECT id, pseudo, can_view_live, can_stream_live, live_autostream, live_stream_key, live_label, live_last_seen FROM users WHERE id = ? LIMIT 1');
+    $stmt = $pdo->prepare('
+        SELECT id, pseudo, can_view_live, can_stream_live, live_autostream, live_stream_key, live_label, live_last_seen
+        FROM users WHERE id = ? LIMIT 1
+    ');
     $stmt->execute([$_SESSION['user_id']]);
     $u = $stmt->fetch(PDO::FETCH_ASSOC);
     return $u ?: null;
@@ -44,19 +48,14 @@ function ensure_stream_key(PDO $pdo, array $u): string {
 
 $action = $_GET['action'] ?? '';
 
-/**
- * BOOTSTRAP SENDER
- * Utilisé par live_autosender.js pour récupérer la room (streamKey) + droits.
- */
+// Helpers auth
+$u = current_user($pdo);
+$canStream = $u && (int)($u['can_stream_live'] ?? 0) === 1;
+$canView   = $u && (int)($u['can_view_live'] ?? 0) === 1;
+
+// --- ALIAS utiles pour le sender ---
 if ($action === 'bootstrap_sender') {
-    if (empty($_SESSION['user_id'])) {
-        json_out(['ok' => false, 'error' => 'not_authenticated'], 401);
-    }
-
-    $u = current_user($pdo);
-    if (!$u) json_out(['ok' => false, 'error' => 'user_not_found'], 401);
-
-    $canStream = (int)($u['can_stream_live'] ?? 0) === 1;
+    if (!$u) json_out(['ok' => false, 'error' => 'not_authenticated'], 401);
     if (!$canStream) json_out(['ok' => false, 'canStream' => false], 403);
 
     $key = ensure_stream_key($pdo, $u);
@@ -68,28 +67,19 @@ if ($action === 'bootstrap_sender') {
     ]);
 }
 
-/**
- * HEARTBEAT SENDER (optionnel)
- * Si tu veux, on le mappe sur la logique existante "heartbeat" (live_last_seen).
- */
 if ($action === 'heartbeat_sender') {
-    $u = current_user($pdo);
+    // Alias -> heartbeat
     if (!$u) json_out(['ok' => false, 'error' => 'not_authenticated'], 401);
-
-    $canStream = (int)($u['can_stream_live'] ?? 0) === 1;
     if (!$canStream) json_out(['ok' => false, 'error' => 'no_permission'], 403);
 
     $stmt = $pdo->prepare('UPDATE users SET live_last_seen = NOW() WHERE id = :id');
     $stmt->execute([':id' => $u['id']]);
-
     json_out(['ok' => true]);
 }
 
-/**
- * STATUS
- */
+// --- API principale ---
 if ($action === 'status') {
-    if (empty($_SESSION['user_id'])) {
+    if (!$u) {
         json_out([
             'loggedIn' => false,
             'canStream' => false,
@@ -100,12 +90,8 @@ if ($action === 'status') {
         ]);
     }
 
-    $u = current_user($pdo);
-    if (!$u) json_out(['error' => 'user_not_found'], 401);
-
     $key = ensure_stream_key($pdo, $u);
 
-    // Valeurs normalisées en session (utile pour header.php)
     $_SESSION['can_view_live']   = (int)($u['can_view_live'] ?? 0);
     $_SESSION['can_stream_live'] = (int)($u['can_stream_live'] ?? 0);
     $_SESSION['live_autostream'] = (int)($u['live_autostream'] ?? 0);
@@ -124,25 +110,15 @@ if ($action === 'status') {
     ]);
 }
 
-$u = current_user($pdo);
-$canStream = $u && (int)($u['can_stream_live'] ?? 0) === 1;
-$canView   = $u && (int)($u['can_view_live'] ?? 0) === 1;
-
-/**
- * ENABLE / DISABLE / HEARTBEAT / LIST_STREAMS
- */
 if ($action === 'enable') {
+    if (!$u) json_out(['error' => 'not_authenticated'], 401);
     if (!$canStream) json_out(['error' => 'no_permission'], 403);
 
     $key = ensure_stream_key($pdo, $u);
 
     $label = trim((string)($_POST['label'] ?? ''));
-    if ($label === '') {
-        $label = ($u['pseudo'] ?? 'User') . ' (' . $key . ')';
-    }
-    if (mb_strlen($label) > 64) {
-        $label = mb_substr($label, 0, 64);
-    }
+    if ($label === '') $label = ($u['pseudo'] ?? 'User') . ' (' . $key . ')';
+    if (mb_strlen($label) > 64) $label = mb_substr($label, 0, 64);
 
     $stmt = $pdo->prepare('UPDATE users SET live_autostream = 1, live_label = :label, live_last_seen = NOW() WHERE id = :id');
     $stmt->execute([':label' => $label, ':id' => $u['id']]);
@@ -155,33 +131,40 @@ if ($action === 'enable') {
 }
 
 if ($action === 'disable') {
+    if (!$u) json_out(['error' => 'not_authenticated'], 401);
     if (!$canStream) json_out(['error' => 'no_permission'], 403);
+
     $stmt = $pdo->prepare('UPDATE users SET live_autostream = 0 WHERE id = :id');
     $stmt->execute([':id' => $u['id']]);
     $_SESSION['live_autostream'] = 0;
+
     json_out(['ok' => true]);
 }
 
 if ($action === 'heartbeat') {
+    if (!$u) json_out(['error' => 'not_authenticated'], 401);
     if (!$canStream) json_out(['error' => 'no_permission'], 403);
+
     $stmt = $pdo->prepare('UPDATE users SET live_last_seen = NOW() WHERE id = :id');
     $stmt->execute([':id' => $u['id']]);
+
     json_out(['ok' => true]);
 }
 
 if ($action === 'list_streams') {
+    if (!$u) json_out(['error' => 'not_authenticated'], 401);
     if (!$canView) json_out(['error' => 'no_permission'], 403);
 
-    // Online = autostream ON + heartbeat récent (30s)
-    $sql = "SELECT id, pseudo, live_stream_key, live_label, live_last_seen
-            FROM users
-            WHERE can_stream_live = 1
-              AND live_autostream = 1
-              AND live_last_seen IS NOT NULL
-              AND live_last_seen > (NOW() - INTERVAL 30 SECOND)
-            ORDER BY live_last_seen DESC
-            LIMIT 50";
-
+    $sql = "
+        SELECT id, pseudo, live_stream_key, live_label, live_last_seen
+        FROM users
+        WHERE can_stream_live = 1
+          AND live_autostream = 1
+          AND live_last_seen IS NOT NULL
+          AND live_last_seen > (NOW() - INTERVAL 30 SECOND)
+        ORDER BY live_last_seen DESC
+        LIMIT 50
+    ";
     $stmt = $pdo->query($sql);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

