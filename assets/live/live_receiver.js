@@ -1,4 +1,5 @@
 // assets/live/live_receiver.js
+// Receiver — UI inchangée, audio via WebAudio (plus fiable que <video> seul)
 
 const CFG = window.__LIVE_CONFIG__ || {
   apiUrl: "/live_api.php",
@@ -13,13 +14,16 @@ const watchStatusEl = $("watchStatus");
 const btnRefresh = $("btnRefreshStreams");
 const btnLeave = $("btnLeave");
 const videoEl = $("receiverVideo");
-const btnUnmute = $("btnUnmute");
 
 let pc = null;
 let room = null;
 let viewerId = null;
 let sinceId = 0;
 let running = false;
+
+// WebAudio
+let audioCtx = null;
+let audioSourceNode = null;
 
 function setStatus(text) { if (statusEl) statusEl.textContent = text; }
 function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text; }
@@ -37,6 +41,38 @@ async function signalPost(body) {
     body: JSON.stringify(body),
   });
   return r.json();
+}
+
+// Débloque l’audio (doit être appelé suite à un geste utilisateur, ici le clic "Regarder")
+async function unlockAudio() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state !== "running") {
+      await audioCtx.resume();
+    }
+  } catch (e) {
+    console.warn("[Receiver] unlockAudio failed:", e);
+  }
+}
+
+function detachWebAudio() {
+  try { audioSourceNode?.disconnect(); } catch {}
+  audioSourceNode = null;
+}
+
+function attachWebAudio(stream) {
+  if (!audioCtx) return; // pas débloqué => rien
+  detachWebAudio();
+
+  try {
+    // Utilise l’audio du stream (si présent) via WebAudio
+    audioSourceNode = audioCtx.createMediaStreamSource(stream);
+    audioSourceNode.connect(audioCtx.destination);
+  } catch (e) {
+    console.warn("[Receiver] attachWebAudio failed:", e);
+  }
 }
 
 async function refreshStreams() {
@@ -83,52 +119,30 @@ function escapeHtml(s) {
   }[c]));
 }
 
-function enableUnmuteIfAudioPresent(stream) {
-  if (!btnUnmute) return;
-
-  const hasAudio = stream && stream.getAudioTracks && stream.getAudioTracks().length > 0;
-  btnUnmute.disabled = !hasAudio;
-  btnUnmute.style.display = hasAudio ? "inline-block" : "none";
-}
-
-async function tryUnmuteAndPlay() {
-  if (!videoEl) return;
-
-  videoEl.muted = false;
-  videoEl.volume = 1;
-
-  try {
-    await videoEl.play();
-    if (btnUnmute) {
-      btnUnmute.disabled = true;
-      btnUnmute.style.display = "none";
-    }
-  } catch {
-    // Autoplay policy: le bouton reste pour un geste utilisateur explicite
-  }
-}
-
 function makePeer() {
   const peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  peer.ontrack = async (ev) => {
+  peer.ontrack = (ev) => {
     const stream = ev.streams[0];
     if (!stream || !videoEl) return;
 
+    // Debug utile (tu peux le laisser)
+    try {
+      console.log("[Receiver] audioTracks:", stream.getAudioTracks().length, "videoTracks:", stream.getVideoTracks().length);
+    } catch {}
+
+    // Vidéo (UI inchangée)
     videoEl.srcObject = stream;
-
-    // Démarre la vidéo de façon permissive (muted)
-    videoEl.muted = true;
+    videoEl.muted = false;
     videoEl.volume = 1;
-    videoEl.play().catch(() => {});
+    videoEl.play().catch(() => { /* autoplay peut bloquer la partie <video> */ });
 
-    // Si audio présent => bouton disponible
-    enableUnmuteIfAudioPresent(stream);
-
-    // Tentative automatique d’unmute (peut échouer, d’où le bouton)
-    await tryUnmuteAndPlay();
+    // Audio via WebAudio (si unlockAudio() a été fait au clic)
+    if (stream.getAudioTracks && stream.getAudioTracks().length > 0) {
+      attachWebAudio(stream);
+    }
   };
 
   peer.onicecandidate = async (ev) => {
@@ -186,17 +200,16 @@ async function watch(r) {
   try {
     await leave();
 
+    // IMPORTANT: geste utilisateur => débloque WebAudio ici
+    await unlockAudio();
+
     room = String(r);
     viewerId = "v_" + Math.random().toString(16).slice(2);
     sinceId = 0;
     running = true;
 
     setWatchStatus(`Connexion au flux ${room}...`);
-
-    if (btnUnmute) {
-      btnUnmute.style.display = "inline-block";
-      btnUnmute.disabled = true;
-    }
+    if (btnLeave) btnLeave.disabled = false;
 
     pc = makePeer();
 
@@ -220,8 +233,6 @@ async function watch(r) {
     }
 
     setWatchStatus("Offer envoyé, attente answer...");
-    if (btnLeave) btnLeave.disabled = false;
-
     poll();
   } catch (e) {
     console.error(e);
@@ -240,25 +251,16 @@ async function leave() {
     pc = null;
   }
 
+  detachWebAudio();
+
   if (videoEl) {
     videoEl.srcObject = null;
-    videoEl.muted = true;
-  }
-
-  if (btnUnmute) {
-    btnUnmute.disabled = true;
-    btnUnmute.style.display = "none";
+    videoEl.muted = false;
+    videoEl.volume = 1;
   }
 
   if (btnLeave) btnLeave.disabled = true;
   setWatchStatus("Déconnecté.");
-}
-
-if (btnUnmute) {
-  btnUnmute.addEventListener("click", () => {
-    // Geste utilisateur explicite => débloque l’audio
-    tryUnmuteAndPlay();
-  });
 }
 
 if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
