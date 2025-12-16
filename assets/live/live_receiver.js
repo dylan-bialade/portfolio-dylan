@@ -1,5 +1,4 @@
 // assets/live/live_receiver.js
-// Receiver (page réservée aux comptes autorisés)
 
 const CFG = window.__LIVE_CONFIG__ || {
   apiUrl: "/live_api.php",
@@ -14,6 +13,7 @@ const watchStatusEl = $("watchStatus");
 const btnRefresh = $("btnRefreshStreams");
 const btnLeave = $("btnLeave");
 const videoEl = $("receiverVideo");
+const btnUnmute = $("btnUnmute");
 
 let pc = null;
 let room = null;
@@ -83,19 +83,53 @@ function escapeHtml(s) {
   }[c]));
 }
 
+function enableUnmuteIfAudioPresent(stream) {
+  if (!btnUnmute) return;
+
+  const hasAudio = stream && stream.getAudioTracks && stream.getAudioTracks().length > 0;
+  btnUnmute.disabled = !hasAudio;
+  btnUnmute.style.display = hasAudio ? "inline-block" : "none";
+}
+
+async function tryUnmuteAndPlay() {
+  if (!videoEl) return;
+
+  videoEl.muted = false;
+  videoEl.volume = 1;
+
+  try {
+    await videoEl.play();
+    if (btnUnmute) {
+      btnUnmute.disabled = true;
+      btnUnmute.style.display = "none";
+    }
+  } catch {
+    // Autoplay policy: le bouton reste pour un geste utilisateur explicite
+  }
+}
+
 function makePeer() {
   const peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  peer.ontrack = (ev) => {
-  if (videoEl) {
-    videoEl.srcObject = ev.streams[0];
-    videoEl.muted = false;
+  peer.ontrack = async (ev) => {
+    const stream = ev.streams[0];
+    if (!stream || !videoEl) return;
+
+    videoEl.srcObject = stream;
+
+    // Démarre la vidéo de façon permissive (muted)
+    videoEl.muted = true;
     videoEl.volume = 1;
-    videoEl.play().catch(()=>{});
-  }
-};
+    videoEl.play().catch(() => {});
+
+    // Si audio présent => bouton disponible
+    enableUnmuteIfAudioPresent(stream);
+
+    // Tentative automatique d’unmute (peut échouer, d’où le bouton)
+    await tryUnmuteAndPlay();
+  };
 
   peer.onicecandidate = async (ev) => {
     if (!ev.candidate || !room) return;
@@ -105,7 +139,7 @@ function makePeer() {
       fromRole: "viewer",
       direction: "viewer_to_sender",
       msgType: "ice",
-      payload: { candidate: ev.candidate }, // IMPORTANT: wrapper attendu par le sender
+      payload: { candidate: ev.candidate },
       viewerId
     });
   };
@@ -131,20 +165,18 @@ async function poll() {
       const t = m.msgType || m.msg_type;
 
       if (t === "answer") {
-        const answer = m?.payload?.answer;   // IMPORTANT: wrapper attendu
+        const answer = m?.payload?.answer;
         if (answer) {
           await pc.setRemoteDescription(answer);
           setWatchStatus("Lecture en cours.");
         }
       } else if (t === "ice") {
-        const cand = m?.payload?.candidate;  // IMPORTANT: wrapper attendu
+        const cand = m?.payload?.candidate;
         if (cand) {
           try { await pc.addIceCandidate(cand); } catch {}
         }
       }
     }
-  } else if (res.error) {
-    console.warn("poll error:", res);
   }
 
   setTimeout(poll, 800);
@@ -161,9 +193,13 @@ async function watch(r) {
 
     setWatchStatus(`Connexion au flux ${room}...`);
 
+    if (btnUnmute) {
+      btnUnmute.style.display = "inline-block";
+      btnUnmute.disabled = true;
+    }
+
     pc = makePeer();
 
-    // Viewer = offerer
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await pc.setLocalDescription(offer);
 
@@ -173,12 +209,11 @@ async function watch(r) {
       fromRole: "viewer",
       direction: "viewer_to_sender",
       msgType: "offer",
-      payload: { offer }, // IMPORTANT: wrapper attendu par le sender
+      payload: { offer },
       viewerId
     });
 
     if (!sendRes.ok) {
-      console.warn("offer send error:", sendRes);
       setWatchStatus(`Erreur offer: ${sendRes.error || "unknown"}`);
       running = false;
       return;
@@ -204,9 +239,26 @@ async function leave() {
     try { pc.close(); } catch {}
     pc = null;
   }
-  if (videoEl) videoEl.srcObject = null;
+
+  if (videoEl) {
+    videoEl.srcObject = null;
+    videoEl.muted = true;
+  }
+
+  if (btnUnmute) {
+    btnUnmute.disabled = true;
+    btnUnmute.style.display = "none";
+  }
+
   if (btnLeave) btnLeave.disabled = true;
   setWatchStatus("Déconnecté.");
+}
+
+if (btnUnmute) {
+  btnUnmute.addEventListener("click", () => {
+    // Geste utilisateur explicite => débloque l’audio
+    tryUnmuteAndPlay();
+  });
 }
 
 if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
