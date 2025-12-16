@@ -1,11 +1,14 @@
 // assets/live/live_receiver.js
-// Receiver (page réservée aux comptes autorisés) — FIX: bouton Regarder + audio
+// Receiver — UI inchangée (IDs existants) + FIX: viewerId court + audio via <audio> caché
 
 (function () {
   const CFG = window.__LIVE_CONFIG__ || {
     apiUrl: "/live_api.php",
     signalUrl: "/live_signal.php",
   };
+
+  const DEBUG = !!window.__LIVE_DEBUG__;
+  const log = (...a) => DEBUG && console.log("[LiveReceiver]", ...a);
 
   function $(id) { return document.getElementById(id); }
 
@@ -18,8 +21,6 @@
 
   function setStatus(text) { if (statusEl) statusEl.textContent = text || ""; }
   function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text || ""; }
-
-  console.log("[LiveReceiver] loaded", CFG);
 
   let pc = null;
   let room = null;
@@ -44,41 +45,43 @@
   }
 
   async function unlockAudioOnGesture() {
-    // Appelé depuis le clic "Regarder"
+    // Doit être appelé depuis un clic utilisateur (Regarder)
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state !== "running") await audioCtx.resume();
 
-      // tick (certains mobiles aiment bien)
+      // petit tick (aide certains mobiles)
       const buffer = audioCtx.createBuffer(1, 1, 22050);
       const src = audioCtx.createBufferSource();
       src.buffer = buffer;
       src.connect(audioCtx.destination);
       src.start(0);
     } catch (e) {
-      console.warn("[LiveReceiver] AudioContext unlock failed:", e);
+      log("AudioContext unlock failed", e?.name || e);
     }
 
     try {
       ensureAudioEl();
       await audioEl.play();
-    } catch {
-      // si bloqué, on retentera après answer
-    }
+    } catch {}
   }
 
   function attachAudioFromStream(stream) {
     ensureAudioEl();
+
     const aTracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
-    console.log("[LiveReceiver] tracks audio:", aTracks.length, "video:", (stream.getVideoTracks?.().length || 0));
+    const vTracks = stream.getVideoTracks ? stream.getVideoTracks() : [];
+
+    console.log("[LiveReceiver] tracks audio:", aTracks.length, "video:", vTracks.length);
 
     if (!aTracks || aTracks.length === 0) {
+      // Important: si tu vois ça, le sender n’envoie pas d’audio
       setWatchStatus("Lecture en cours (AUDIO: 0 piste reçue).");
       return;
     }
 
-    const audioOnly = new MediaStream(aTracks);
-    audioEl.srcObject = audioOnly;
+    // Audio via <audio> séparé (plus robuste que l’audio du <video>)
+    audioEl.srcObject = new MediaStream(aTracks);
     audioEl.muted = false;
     audioEl.volume = 1;
     audioEl.play().catch(() => {});
@@ -92,6 +95,7 @@
   }
 
   async function signalSend({ room, msgType, payload }) {
+    // IMPORTANT: action dans l’URL => compatible avec ton live_signal.php
     const res = await fetch(`${CFG.signalUrl}?action=send`, {
       method: "POST",
       credentials: "same-origin",
@@ -99,7 +103,7 @@
       body: JSON.stringify({
         room,
         fromRole: "viewer",
-        direction: "to_sender",
+        direction: "viewer_to_sender", // sera normalisé en "to_sender"
         msgType,
         payload,
         viewerId
@@ -120,7 +124,6 @@
     return res.json();
   }
 
-  // FIX ICI : fonction valide (ton fichier avait une erreur """: )
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({
       "&": "&amp;",
@@ -129,6 +132,14 @@
       '"': "&quot;",
       "'": "&#39;"
     }[c]));
+  }
+
+  // FIX CRITIQUE: viewerId court (évite troncature DB => plus de flux)
+  function makeShortViewerId() {
+    // 1 + 8 + 6 = 15 chars (safe même si viewer_id est petit)
+    const r = Math.random().toString(16).slice(2, 10);
+    const t = Date.now().toString(16).slice(-6);
+    return "v" + r + t;
   }
 
   function makePeer() {
@@ -166,6 +177,7 @@
 
     // retente play audio après answer
     try { await audioEl?.play?.(); } catch {}
+    try { await videoEl?.play?.(); } catch {}
 
     setWatchStatus("Lecture en cours.");
   }
@@ -221,7 +233,7 @@
     await unlockAudioOnGesture();
 
     room = roomKey;
-    viewerId = (crypto?.randomUUID ? crypto.randomUUID() : ("v-" + Math.random().toString(16).slice(2)));
+    viewerId = makeShortViewerId(); // <<< FIX FLUX
     sinceId = 0;
 
     ensureAudioEl();
@@ -229,7 +241,7 @@
     pc = makePeer();
     running = true;
 
-    // Force réception audio + vidéo (plus fiable)
+    // Force réception audio + vidéo
     try {
       pc.addTransceiver("audio", { direction: "recvonly" });
       pc.addTransceiver("video", { direction: "recvonly" });
@@ -269,7 +281,7 @@
     if (!listEl) return;
 
     if (!res.streams.length) {
-      listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne (heartbeat < 30s).</div>`;
+      listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne.</div>`;
       return;
     }
 
@@ -282,7 +294,6 @@
     `).join("");
   }
 
-  // Delegation : garantit que "Regarder" marche même après re-render
   if (listEl) {
     listEl.addEventListener("click", (e) => {
       const btn = e.target?.closest?.("button[data-room]");
@@ -295,10 +306,6 @@
 
   if (btnRefresh) btnRefresh.addEventListener("click", (e) => { e.preventDefault(); refreshStreams(); });
   if (btnLeave) btnLeave.addEventListener("click", (e) => { e.preventDefault(); leave(); });
-
-  // Expose debug
-  window.liveReceiverWatch = watch;
-  window.liveReceiverLeave = leave;
 
   // init
   document.addEventListener("DOMContentLoaded", () => {
