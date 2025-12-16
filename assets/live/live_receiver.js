@@ -89,8 +89,13 @@ function makePeer() {
   });
 
   peer.ontrack = (ev) => {
-    if (videoEl) videoEl.srcObject = ev.streams[0];
-  };
+  if (videoEl) {
+    videoEl.srcObject = ev.streams[0];
+    videoEl.muted = false;
+    videoEl.volume = 1;
+    videoEl.play().catch(()=>{});
+  }
+};
 
   peer.onicecandidate = async (ev) => {
     if (!ev.candidate || !room) return;
