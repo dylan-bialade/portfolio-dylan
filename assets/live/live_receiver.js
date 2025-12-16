@@ -111,18 +111,29 @@ function makePeer() {
 async function poll() {
   if (!running || !room) return;
 
-  const res = await signalPost({ action: "poll", room, viewerId, sinceId });
+  const res = await signalPost({
+    action: "receive",
+    role: "viewer",
+    room,
+    viewerId,
+    sinceId,
+    timeout: 15000
+  });
+
   if (res.ok && Array.isArray(res.messages)) {
     for (const m of res.messages) {
       sinceId = Math.max(sinceId, m.id || 0);
 
-      if (m.msg_type === "answer") {
+      if (m.msgType === "answer" || m.msg_type === "answer") {
         await pc.setRemoteDescription(m.payload);
         setWatchStatus("Lecture en cours.");
-      } else if (m.msg_type === "ice") {
+      } else if (m.msgType === "ice" || m.msg_type === "ice") {
         try { await pc.addIceCandidate(m.payload); } catch {}
       }
     }
+  } else if (res.error) {
+    // Utile pour diagnostiquer côté OVH
+    console.warn("poll error:", res);
   }
 
   setTimeout(poll, 800);
@@ -132,7 +143,7 @@ async function watch(r) {
   try {
     await leave();
 
-    room = r;
+    room = String(r);
     viewerId = "v_" + Math.random().toString(16).slice(2);
     sinceId = 0;
     running = true;
@@ -145,7 +156,7 @@ async function watch(r) {
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await pc.setLocalDescription(offer);
 
-    await signalPost({
+    const sendRes = await signalPost({
       action: "send",
       room,
       fromRole: "viewer",
@@ -154,6 +165,13 @@ async function watch(r) {
       payload: offer,
       viewerId
     });
+
+    if (!sendRes.ok) {
+      console.warn("offer send error:", sendRes);
+      setWatchStatus(`Erreur offer: ${sendRes.error || "unknown"}`);
+      running = false;
+      return;
+    }
 
     setWatchStatus("Offer envoyé, attente answer...");
     btnLeave && (btnLeave.disabled = false);
