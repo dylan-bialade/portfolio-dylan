@@ -1,5 +1,7 @@
 // assets/live/live_receiver.js
-// Receiver (UI inchangée) + FIX SON (Audio unlock + audio element caché)
+// - UI inchangée (utilise tes IDs existants)
+// - "Regarder" fiable (event delegation + preventDefault)
+// - Son via <audio> caché + audio unlock au clic "Regarder"
 
 const CFG = window.__LIVE_CONFIG__ || {
   apiUrl: "/live_api.php",
@@ -21,77 +23,31 @@ let viewerId = null;
 let sinceId = 0;
 let running = false;
 
-// --- Audio unlock (fiable) ---
+// Audio unlock
 let audioCtx = null;
 let audioEl = null;
 
 function setStatus(text) { if (statusEl) statusEl.textContent = text || ""; }
 function setWatchStatus(text) { if (watchStatusEl) watchStatusEl.textContent = text || ""; }
 
-async function api(action) {
-  const url = new URL(CFG.apiUrl, window.location.origin);
-  url.searchParams.set("action", action);
-  const res = await fetch(url.toString(), { credentials: "same-origin" });
-  return res.json();
+async function apiGet(action) {
+  const r = await fetch(`${CFG.apiUrl}?action=${encodeURIComponent(action)}`, { credentials: "same-origin" });
+  return r.json();
 }
 
-async function signalSend({ room, msgType, payload }) {
-  const res = await fetch(`${CFG.signalUrl}?action=send`, {
+async function signalPost(body) {
+  const r = await fetch(CFG.signalUrl, {
     method: "POST",
-    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      room,
-      fromRole: "viewer",
-      direction: "to_sender",
-      msgType,
-      payload,
-      viewerId
-    })
+    credentials: "same-origin",
+    body: JSON.stringify(body),
   });
-  return res.json();
-}
-
-async function signalReceive(timeout = 15000) {
-  const url = new URL(CFG.signalUrl, window.location.origin);
-  url.searchParams.set("action", "receive");
-  url.searchParams.set("room", room);
-  url.searchParams.set("role", "viewer");
-  url.searchParams.set("viewerId", viewerId);
-  url.searchParams.set("since_id", String(sinceId));
-  url.searchParams.set("timeout", String(timeout));
-  const res = await fetch(url.toString(), { credentials: "same-origin" });
-  return res.json();
-}
-
-function renderStreams(streams) {
-  if (!listEl) return;
-
-  if (!streams || !streams.length) {
-    listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne (heartbeat &lt; 30s).</div>`;
-    return;
-  }
-
-  listEl.innerHTML = streams.map(s => `
-    <div class="live-stream-item">
-      <div class="title">${escapeHtml(s.label || s.streamKey)}</div>
-      <div class="meta">Room: <code>${escapeHtml(s.streamKey || "")}</code></div>
-      <button data-room="${escapeHtml(s.streamKey || "")}">Regarder</button>
-    </div>
-  `).join("");
-
-  listEl.querySelectorAll("button[data-room]").forEach(btn => {
-    btn.addEventListener("click", () => watch(btn.dataset.room));
-  });
+  return r.json();
 }
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
 
@@ -107,13 +63,13 @@ function ensureAudioElements() {
   }
 }
 
-async function unlockAudioOnUserGesture() {
-  // 1) WebAudio unlock (très fiable)
+async function unlockAudio() {
+  // Doit être appelé suite à un geste utilisateur (clic "Regarder")
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state !== "running") await audioCtx.resume();
 
-    // petit “beep” silencieux (buffer vide) pour finaliser l’unlock sur certains mobiles
+    // micro "tick" (certains mobiles en ont besoin)
     const buffer = audioCtx.createBuffer(1, 1, 22050);
     const src = audioCtx.createBufferSource();
     src.buffer = buffer;
@@ -121,7 +77,6 @@ async function unlockAudioOnUserGesture() {
     src.start(0);
   } catch {}
 
-  // 2) audio tag unlock
   try {
     ensureAudioElements();
     await audioEl.play();
@@ -131,13 +86,12 @@ async function unlockAudioOnUserGesture() {
 function attachAudioStream(stream) {
   try {
     ensureAudioElements();
-    const tracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
-    if (!tracks || tracks.length === 0) {
-      // debug simple dans ton UI existante
-      setWatchStatus("Lecture en cours (AUDIO: aucune piste reçue).");
+    const aTracks = stream.getAudioTracks ? stream.getAudioTracks() : [];
+    if (!aTracks || aTracks.length === 0) {
+      setWatchStatus("Lecture en cours (AUDIO: 0 piste reçue).");
       return;
     }
-    const audioOnly = new MediaStream(tracks);
+    const audioOnly = new MediaStream(aTracks);
     audioEl.srcObject = audioOnly;
     audioEl.muted = false;
     audioEl.volume = 1;
@@ -145,6 +99,40 @@ function attachAudioStream(stream) {
   } catch (e) {
     console.warn("[Receiver] attachAudioStream error", e);
   }
+}
+
+function detachAudio() {
+  try { if (audioEl) audioEl.srcObject = null; } catch {}
+}
+
+async function refreshStreams() {
+  setStatus("Chargement...");
+  const res = await apiGet("list_streams");
+
+  if (!res || res.ok !== true) {
+    setStatus("Impossible de charger la liste.");
+    if (listEl) listEl.innerHTML = `<div class="live-muted">Erreur.</div>`;
+    return;
+  }
+
+  const streams = res.streams || [];
+  setStatus(`${streams.length} flux en ligne`);
+
+  if (!listEl) return;
+
+  if (streams.length === 0) {
+    listEl.innerHTML = `<div class="live-muted">Aucun flux en ligne.</div>`;
+    return;
+  }
+
+  // IMPORTANT: type="button" évite les submits si ton UI est dans un <form>
+  listEl.innerHTML = streams.map(s => `
+    <div class="live-stream-item">
+      <div class="title">${escapeHtml(s.label || s.streamKey)}</div>
+      <div class="meta">Room: <code>${escapeHtml(s.streamKey || "")}</code></div>
+      <button type="button" data-room="${escapeHtml(s.streamKey || "")}">Regarder</button>
+    </div>
+  `).join("");
 }
 
 function makePeer() {
@@ -156,7 +144,13 @@ function makePeer() {
     const stream = ev.streams[0];
     if (!stream) return;
 
-    // Vidéo (UI identique)
+    // Debug (laisse, ça aide)
+    try {
+      const a = stream.getAudioTracks().length;
+      const v = stream.getVideoTracks().length;
+      console.log("[Receiver] tracks audio:", a, "video:", v);
+    } catch {}
+
     if (videoEl) {
       videoEl.srcObject = stream;
       videoEl.muted = false;
@@ -164,134 +158,141 @@ function makePeer() {
       videoEl.play().catch(() => {});
     }
 
-    // Audio (sortie via <audio> caché)
     attachAudioStream(stream);
   };
 
   peer.onicecandidate = async (ev) => {
-    if (!ev.candidate) return;
-    await signalSend({ room, msgType: "ice", payload: { candidate: ev.candidate } });
+    if (!ev.candidate || !room) return;
+    await signalPost({
+      action: "send",
+      room,
+      fromRole: "viewer",
+      direction: "viewer_to_sender",
+      msgType: "ice",
+      payload: { candidate: ev.candidate },
+      viewerId
+    });
   };
 
   return peer;
 }
 
+async function poll() {
+  if (!running || !room) return;
+
+  const res = await signalPost({
+    action: "receive",
+    role: "viewer",
+    room,
+    viewerId,
+    sinceId,
+    timeout: 15000
+  });
+
+  if (res && res.ok === true && Array.isArray(res.messages)) {
+    for (const m of res.messages) {
+      sinceId = Math.max(sinceId, m.id || 0);
+      const t = m.msgType || m.msg_type;
+
+      if (t === "answer") {
+        const answer = m?.payload?.answer;
+        if (answer) {
+          await pc.setRemoteDescription(answer);
+          setWatchStatus("Lecture en cours.");
+          try { audioEl?.play?.(); } catch {}
+        }
+      } else if (t === "ice") {
+        const cand = m?.payload?.candidate;
+        if (cand) {
+          try { await pc.addIceCandidate(cand); } catch {}
+        }
+      }
+    }
+  }
+
+  setTimeout(poll, 800);
+}
+
 async function watch(roomKey) {
   await leave();
 
-  // IMPORTANT: le clic “Regarder” est un geste utilisateur -> unlock audio ici
-  await unlockAudioOnUserGesture();
+  // GESTE UTILISATEUR => unlock audio ici
+  await unlockAudio();
 
-  room = roomKey;
-  viewerId = (crypto?.randomUUID ? crypto.randomUUID() : ("v-" + Math.random().toString(16).slice(2)));
+  room = String(roomKey);
+  viewerId = "v_" + Math.random().toString(16).slice(2);
   sinceId = 0;
-
-  pc = makePeer();
   running = true;
 
-  // IMPORTANT: transceivers pour forcer réception audio/vidéo (fiable sur versions récentes)
+  setWatchStatus(`Connexion au flux ${room}...`);
+  if (btnLeave) btnLeave.disabled = false;
+
+  pc = makePeer();
+
+  // Force réception audio+vidéo (plus fiable selon navigateurs)
   try {
     pc.addTransceiver("audio", { direction: "recvonly" });
     pc.addTransceiver("video", { direction: "recvonly" });
   } catch {}
 
-  setWatchStatus(`Connexion au flux ${room}…`);
-  if (btnLeave) btnLeave.disabled = false;
-
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  const sent = await signalSend({ room, msgType: "offer", payload: { offer } });
-  if (!sent || sent.ok !== true) {
-    setWatchStatus("Impossible d'envoyer l'offre (signalisation).");
+  const sendRes = await signalPost({
+    action: "send",
+    room,
+    fromRole: "viewer",
+    direction: "viewer_to_sender",
+    msgType: "offer",
+    payload: { offer },
+    viewerId
+  });
+
+  if (!sendRes || sendRes.ok !== true) {
+    setWatchStatus(`Erreur offer: ${sendRes?.error || "unknown"}`);
     running = false;
     return;
   }
 
-  pollLoop().catch((e) => {
-    console.error(e);
-    setWatchStatus("Erreur (poll).");
-  });
-}
-
-async function handleAnswer(msg) {
-  const answer = msg?.payload?.answer;
-  if (!answer) return;
-  await pc.setRemoteDescription(answer);
-
-  // retente audio play après answer
-  try { audioEl?.play?.(); } catch {}
-
-  setWatchStatus("Lecture en cours.");
-}
-
-async function handleIce(msg) {
-  const c = msg?.payload?.candidate;
-  if (!c) return;
-  try { await pc.addIceCandidate(c); } catch {}
-}
-
-async function pollLoop() {
-  while (running) {
-    const res = await signalReceive(15000);
-
-    if (!running) return;
-
-    if (!res || res.ok !== true) {
-      setWatchStatus("Signalisation indisponible.");
-      await new Promise(r => setTimeout(r, 1200));
-      continue;
-    }
-
-    sinceId = res.lastId || sinceId;
-    const msgs = res.messages || [];
-
-    for (const m of msgs) {
-      if (m.msgType === "answer") await handleAnswer(m);
-      if (m.msgType === "ice") await handleIce(m);
-    }
-  }
+  setWatchStatus("Offer envoyé, attente answer...");
+  poll();
 }
 
 async function leave() {
   running = false;
-  sinceId = 0;
-  viewerId = null;
   room = null;
+  viewerId = null;
+  sinceId = 0;
 
   try { pc?.close(); } catch {}
   pc = null;
 
-  if (videoEl) videoEl.srcObject = null;
+  if (videoEl) {
+    videoEl.srcObject = null;
+    videoEl.muted = false;
+    videoEl.volume = 1;
+  }
 
-  // stop audio output
-  try { if (audioEl) audioEl.srcObject = null; } catch {}
+  detachAudio();
 
   if (btnLeave) btnLeave.disabled = true;
-  setWatchStatus("");
+  setWatchStatus("Déconnecté.");
 }
 
-async function refreshStreams() {
-  setStatus("Chargement…");
-  const res = await api("list_streams");
-  if (!res || res.ok !== true) {
-    setStatus("Impossible de charger la liste.");
-    renderStreams([]);
-    return;
-  }
-  setStatus(`${res.streams.length} flux en ligne`);
-  renderStreams(res.streams);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (btnRefresh) btnRefresh.addEventListener("click", refreshStreams);
-  if (btnLeave) btnLeave.addEventListener("click", leave);
-
-  refreshStreams().catch((e) => {
-    console.error(e);
-    setStatus("Erreur.");
+// --- Event delegation : "Regarder" marche même si la liste est re-render ---
+if (listEl) {
+  listEl.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest("button[data-room]") : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const r = btn.getAttribute("data-room");
+    if (r) watch(r);
   });
+}
 
-  // refresh léger toutes les 5 secondes
-  setInterval(() => refreshStreams().catch(() => {}), 5000);
-});
+if (btnRefresh) btnRefresh.addEventListener("click", (e) => { e.preventDefault(); refreshStreams(); });
+if (btnLeave) btnLeave.addEventListener("click", (e) => { e.preventDefault(); leave(); });
+
+refreshStreams();
+setInterval(() => refreshStreams().catch(() => {}), 5000);
