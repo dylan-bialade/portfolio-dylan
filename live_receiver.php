@@ -61,6 +61,6 @@ include __DIR__ . '/partials/head.php';
 </script>
 
 <!-- IMPORTANT: cache-buster -->
-<script type="module" src="/assets/live/live_receiver.js?v=20251216a"></script>
+<script src="/assets/live/live_receiver_fix.js" defer></script>
 </body>
 </html>
