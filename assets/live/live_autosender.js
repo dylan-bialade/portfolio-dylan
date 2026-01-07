@@ -1,8 +1,9 @@
 // assets/live/live_autosender.js
-// Sender "headless" : aucun UI visible.
-// - Compatible OVH mutualisé (signalisation DB via live_signal.php)
-// - Démarrage via bouton (window.LiveSender.startFromUserGesture)
-// - Redémarrage auto si l'utilisateur a déjà autorisé le live (localStorage flag)
+// Sender headless (pas d’UI visible) + polling DB (live_signal.php)
+// - Démarrage via window.LiveSender.startFromUserGesture()
+// - Autostart si localStorage flag présent
+// - Heartbeat immédiat + intervalle
+// - Logs en cas d’échec d’autostart
 
 (() => {
   const CFG = window.__LIVE_CONFIG__ || {
@@ -10,13 +11,14 @@
     signalUrl: "/live_signal.php",
   };
 
+  const FLAG_KEY = "bialadev_live_sender_enabled";
   const DEBUG = !!window.__LIVE_DEBUG__;
   const log = (...a) => { if (DEBUG) console.log("[LiveSender]", ...a); };
   const warn = (...a) => console.warn("[LiveSender]", ...a);
 
-  if (window.__LIVE_DISABLE_SENDER__ === true) return;
-
-  const FLAG_KEY = "bialadev_live_sender_enabled";
+  // Cache l’UI si elle existe dans le footer
+  const widget = document.getElementById("liveWidget");
+  if (widget) widget.style.display = "none";
 
   let running = false;
   let room = null;
@@ -29,7 +31,7 @@
 
   const peers = new Map(); // viewerId -> RTCPeerConnection
 
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   async function api(action, opts = {}) {
     const url = new URL(CFG.apiUrl, window.location.origin);
@@ -83,7 +85,7 @@
         log("wakeLock acquired");
       }
     } catch (e) {
-      log("wakeLock unavailable", e);
+      log("wakeLock unavailable", e?.name || e);
     }
   }
 
@@ -97,12 +99,14 @@
     if (!v) return;
 
     v.addEventListener("ended", () => {
+      warn("video track ended -> replacing with black track");
       try {
-        warn("video track ended -> replacing with black track");
         const canvas = document.createElement("canvas");
         canvas.width = 640; canvas.height = 480;
         const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         const blackStream = canvas.captureStream(5);
         const blackTrack = blackStream.getVideoTracks()[0];
 
@@ -114,7 +118,7 @@
           sender?.replaceTrack(blackTrack);
         }
       } catch (e) {
-        warn("replace track failed", e);
+        warn("replace track failed", e?.name || e);
       }
     });
   }
@@ -150,9 +154,7 @@
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
       log("pc state", viewerId, st);
-      if (st === "failed" || st === "disconnected" || st === "closed") {
-        cleanupPeer(viewerId);
-      }
+      if (st === "failed" || st === "disconnected" || st === "closed") cleanupPeer(viewerId);
     };
 
     return pc;
@@ -244,6 +246,9 @@
     await getLocalStream();
     await requestWakeLock();
 
+    // IMPORTANT: heartbeat immédiat (sinon tu n'apparais pas rapidement)
+    try { await api("heartbeat_sender"); } catch {}
+
     heartbeatTimer = setInterval(() => {
       api("heartbeat_sender").catch(() => {});
     }, 10000);
@@ -283,7 +288,7 @@
         if (ok) localStorage.setItem(FLAG_KEY, "1");
         return ok;
       } catch (e) {
-        warn("startFromUserGesture", e);
+        warn("startFromUserGesture", e?.name || e);
         return false;
       }
     },
@@ -294,10 +299,17 @@
     isRunning() { return running; }
   };
 
+  // Autostart : si flag présent, on tente. Si ça échoue, on LOG au lieu de silencieux.
   (async () => {
     const enabled = localStorage.getItem(FLAG_KEY) === "1";
     if (!enabled) return;
-    try { await startInternal(); } catch {}
+
+    try {
+      const ok = await startInternal();
+      if (!ok) warn("autoStart: refusé (droits ou boot)");
+    } catch (e) {
+      warn("autoStart failed (souvent dû à getUserMedia sans geste utilisateur)", e?.name || e);
+    }
   })();
 
   document.addEventListener("visibilitychange", () => {

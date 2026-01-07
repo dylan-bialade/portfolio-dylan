@@ -123,7 +123,14 @@ if ($action === 'enable') {
         $label = trim((string)($body['label'] ?? ($_POST['label'] ?? '')));
     }
 
-    $stmt = $pdo->prepare('UPDATE users SET live_autostream = 1, live_label = :l WHERE id = :id');
+    // IMPORTANT: mettre live_last_seen à NOW() pour apparaître tout de suite dans list_streams
+    $stmt = $pdo->prepare('
+        UPDATE users
+        SET live_autostream = 1,
+            live_label = :l,
+            live_last_seen = NOW()
+        WHERE id = :id
+    ');
     $stmt->execute([':l' => $label, ':id' => $u['id']]);
 
     $_SESSION['live_autostream'] = 1;
