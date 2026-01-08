@@ -1,9 +1,5 @@
 // assets/live/live_autosender.js
-// Sender headless (pas d’UI visible) + polling DB (live_signal.php)
-// - Démarrage via window.LiveSender.startFromUserGesture()
-// - Autostart si localStorage flag présent
-// - Heartbeat immédiat + intervalle
-// - Logs en cas d’échec d’autostart
+// Sender headless + démarrage différé sur geste utilisateur (anti NotAllowedError)
 
 (() => {
   const CFG = window.__LIVE_CONFIG__ || {
@@ -13,12 +9,8 @@
 
   const FLAG_KEY = "bialadev_live_sender_enabled";
   const DEBUG = !!window.__LIVE_DEBUG__;
-  const log = (...a) => { if (DEBUG) console.log("[LiveSender]", ...a); };
+  const log  = (...a) => { if (DEBUG) console.log("[LiveSender]", ...a); };
   const warn = (...a) => console.warn("[LiveSender]", ...a);
-
-  // Cache l’UI si elle existe dans le footer
-  const widget = document.getElementById("liveWidget");
-  if (widget) widget.style.display = "none";
 
   let running = false;
   let room = null;
@@ -30,7 +22,6 @@
   let pollAbort = null;
 
   const peers = new Map(); // viewerId -> RTCPeerConnection
-
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   async function api(action, opts = {}) {
@@ -208,7 +199,7 @@
       let res;
       try {
         res = await signalReceive({ room, sinceId, timeout: 15000 });
-      } catch (e) {
+      } catch {
         if (!running) return;
         await sleep(800);
         continue;
@@ -234,6 +225,7 @@
   async function startInternal() {
     if (running) return true;
 
+    // 1) boot
     const boot = await api("bootstrap_sender").catch(() => null);
     if (!boot || boot.ok !== true) return false;
     if (!boot.canStream || !boot.streamKey) return false;
@@ -241,14 +233,19 @@
     room = boot.streamKey;
     sinceId = 0;
 
+    // 2) active côté DB (pour apparaître dans list_streams)
+    try { await api("enable", { method: "POST", body: { label: "" } }); } catch {}
+
     pollAbort = new AbortController();
 
+    // 3) getUserMedia (doit être appelé depuis un geste utilisateur pour être fiable)
     await getLocalStream();
+
+    // 4) keep alive
     await requestWakeLock();
 
-    // IMPORTANT: heartbeat immédiat (sinon tu n'apparais pas rapidement)
+    // heartbeat immédiat + interval
     try { await api("heartbeat_sender"); } catch {}
-
     heartbeatTimer = setInterval(() => {
       api("heartbeat_sender").catch(() => {});
     }, 10000);
@@ -256,6 +253,7 @@
     running = true;
     pollLoop().catch((e) => warn("pollLoop fatal", e));
 
+    log("started OK room=", room);
     return true;
   }
 
@@ -281,6 +279,7 @@
     sinceId = 0;
   }
 
+  // API publique
   window.LiveSender = {
     async startFromUserGesture() {
       try {
@@ -299,18 +298,37 @@
     isRunning() { return running; }
   };
 
-  // Autostart : si flag présent, on tente. Si ça échoue, on LOG au lieu de silencieux.
-  (async () => {
+  // IMPORTANT: au lieu de démarrer direct (=> NotAllowedError),
+  // on attend le prochain geste utilisateur si le flag est activé.
+  function deferStartOnNextGesture() {
     const enabled = localStorage.getItem(FLAG_KEY) === "1";
-    if (!enabled) return;
+    if (!enabled || running) return;
 
-    try {
-      const ok = await startInternal();
-      if (!ok) warn("autoStart: refusé (droits ou boot)");
-    } catch (e) {
-      warn("autoStart failed (souvent dû à getUserMedia sans geste utilisateur)", e?.name || e);
-    }
-  })();
+    let done = false;
+
+    const handler = async () => {
+      if (done) return;
+      done = true;
+
+      document.removeEventListener("pointerdown", handler, true);
+      document.removeEventListener("touchstart", handler, true);
+      document.removeEventListener("keydown", handler, true);
+
+      try {
+        await startInternal();
+      } catch (e) {
+        warn("deferred start failed", e?.name || e);
+      }
+    };
+
+    document.addEventListener("pointerdown", handler, true);
+    document.addEventListener("touchstart", handler, true);
+    document.addEventListener("keydown", handler, true);
+
+    log("deferred start armed (waiting for user gesture)");
+  }
+
+  deferStartOnNextGesture();
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && running) requestWakeLock();
