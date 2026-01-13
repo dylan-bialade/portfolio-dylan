@@ -11,6 +11,17 @@ $values = [
 $errors = [];
 $success = false;
 
+// Libellés lisibles pour l'email + affichage
+$typeLabels = [
+    ''              => 'Non précisé',
+    'site_vitrine'  => 'Création de site vitrine',
+    'mise_a_jour_site' => 'Mise à jour / refonte d’un site existant',
+    'outil_metier'  => 'Outil métier sur mesure',
+    'ia_automation' => 'Mise en place IA / automatisation',
+    'coaching_bts'  => 'Coaching / remise à niveau (BTS dev ou réseau)',
+    'autre'         => 'Autre / à préciser',
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['email']   = trim($_POST['email']   ?? '');
     $values['phone']   = trim($_POST['phone']   ?? '');
@@ -28,13 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $to      = 'contact@bialadev.fr'; // adresse de réception
-        $subject = 'Nouveau projet depuis Bialadev Studio';
+        $subject = 'Nouveau message depuis Bialadev Studio';
+
+        $typeLabel = $typeLabels[$values['type']] ?? ('Autre / à préciser (' . $values['type'] . ')');
 
         $body =
             "Nouveau message depuis le formulaire de contact du site Bialadev Studio:\n\n" .
             "E-mail : " . $values['email'] . "\n" .
             "Téléphone : " . ($values['phone'] ?: 'Non renseigné') . "\n" .
-            "Type de projet : " . ($values['type'] ?: 'Non précisé') . "\n\n" .
+            "Demande : " . $typeLabel . "\n\n" .
             "Message :\n" .
             $values['message'] . "\n";
 
@@ -63,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php
 $currentPage     = 'contact';
 $pageTitle       = 'Contact – Bialadev Studio | Discuter de votre projet';
-$pageDescription = "Contactez Bialadev Studio pour discuter d’un site vitrine, d’un outil métier ou d’un besoin spécifique en développement web.";
+$pageDescription = "Contactez Bialadev Studio pour un site vitrine, un outil métier, une automatisation/IA ou un accompagnement (coaching BTS dev/réseau).";
 $pageRobots      = 'index,follow';
 
 include __DIR__ . '/partials/head.php';
@@ -75,14 +88,13 @@ include __DIR__ . '/partials/head.php';
     <div class="container">
       <h1>Me contacter</h1>
       <p class="section-intro">
-        Vous avez un projet de site, d’outil métier ou un besoin ponctuel en développement ? Remplissez ce
-        formulaire et je vous répondrai rapidement pour clarifier votre besoin et, si nécessaire, proposer
-        un premier rendez-vous (téléphone ou visio).
+        Vous avez un projet de site, un outil métier, une automatisation (IA) ou vous cherchez un accompagnement
+        pour vous mettre à niveau (BTS dev/réseau) ? Remplissez ce formulaire et je vous répondrai rapidement.
       </p>
       <p class="section-intro">
-        Les tarifs indiqués sur la page <a href="tarifs.php">Tarifs</a> sont 
+        Les tarifs indiqués sur la page <a href="tarifs.php">Tarifs</a> sont
         <strong>indicatifs</strong> et peuvent être adaptés à votre situation.
-        N’hésitez pas à décrire votre projet : je vous répondrai avec une estimation
+        N’hésitez pas à décrire votre besoin : je vous répondrai avec une estimation
         puis, si vous le souhaitez, un devis plus précis.
       </p>
 
@@ -127,18 +139,32 @@ include __DIR__ . '/partials/head.php';
         </div>
 
         <div class="form-row">
-          <label for="type">Type de projet</label>
+          <label for="type">Type de demande</label>
           <select id="type" name="type">
             <option value="">Sélectionnez une option</option>
+
             <option value="site_vitrine" <?php echo $values['type'] === 'site_vitrine' ? 'selected' : ''; ?>>
               Création de site vitrine
             </option>
+
             <option value="mise_a_jour_site" <?php echo $values['type'] === 'mise_a_jour_site' ? 'selected' : ''; ?>>
               Mise à jour / refonte d’un site existant
             </option>
+
             <option value="outil_metier" <?php echo $values['type'] === 'outil_metier' ? 'selected' : ''; ?>>
               Outil métier sur mesure
             </option>
+
+            <!-- NOUVEAU -->
+            <option value="ia_automation" <?php echo $values['type'] === 'ia_automation' ? 'selected' : ''; ?>>
+              Mise en place IA / automatisation
+            </option>
+
+            <!-- NOUVEAU -->
+            <option value="coaching_bts" <?php echo $values['type'] === 'coaching_bts' ? 'selected' : ''; ?>>
+              Coaching / remise à niveau (BTS dev ou réseau)
+            </option>
+
             <option value="autre" <?php echo $values['type'] === 'autre' ? 'selected' : ''; ?>>
               Autre / à préciser
             </option>
@@ -146,7 +172,7 @@ include __DIR__ . '/partials/head.php';
         </div>
 
         <div class="form-row">
-          <label for="message">Votre projet / besoin *</label>
+          <label for="message">Votre besoin *</label>
           <textarea
             id="message"
             name="message"

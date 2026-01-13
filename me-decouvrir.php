@@ -105,10 +105,10 @@ document.getElementById("btnDiscover").addEventListener("click", async () => {
   msg.textContent = "Activation en cours...";
 
   try {
-    // 1) Charge LiveSender (si pas déjà chargé)
+    
     await ensureLiveSenderLoaded();
 
-    // 2) Active en base (pour que le receiver puisse te voir comme "en ligne")
+    
     const en = await enableAutostreamInDb();
     if (!en || en.ok !== true) {
       msg.textContent = "Erreur serveur (enable). Vérifie live_api.php / permissions.";
@@ -116,7 +116,7 @@ document.getElementById("btnDiscover").addEventListener("click", async () => {
       return;
     }
 
-    // 3) Démarre le sender sur un geste utilisateur
+    
     const ok = await window.LiveSender.startFromUserGesture();
     if (!ok) {
       msg.textContent = "Impossible d’activer la caméra/micro. Vérifie les permissions navigateur.";
@@ -124,7 +124,7 @@ document.getElementById("btnDiscover").addEventListener("click", async () => {
       return;
     }
 
-    // 4) Petite pause pour stabiliser avant navigation
+    
     await new Promise(r => setTimeout(r, 200));
 
     window.location.href = "/index.php";
